@@ -2,18 +2,26 @@ var express = require('express');
 var router = express.Router();
 
 const dbConnect = require('../utils/dbConnect');
+const ALEXA_SYNC_CODES_TABLE = 'alexa';
 
 // Generate codes for a user
 router.get('/verification-codes', function(req, res, next) {
+
+    const STORE = {};
+
     dbConnect()
     .then((connection) => {
-        
-        const randomFourDigitInt = Math.floor(1000 + Math.random() * 9000);
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
-
+        // TODO: GET all sync codes first to ensure uniqueness. Then regenerate is a duplicate is encountered.
+        const syncCode = Math.floor(1000 + Math.random() * 9000);
+        STORE.syncCode = syncCode;
+        return connection.collection(ALEXA_SYNC_CODES_TABLE).insertOne({
+            userId: 'userABC',
+            syncCode,
+        });
+    })
+    .then(() => {
         res.send({
-            codeOne: randomColor,
-            codeTwo: randomFourDigitInt
+            syncCode: STORE.syncCode,
         });
     })
     .catch((err) => {
@@ -27,12 +35,12 @@ router.get('/verification-codes', function(req, res, next) {
 // Alexa endpoint to sync device with app profile
 router.post('/sync-profile', function(req, res, next) {
 
-    const { codeOne, codeTwo, alexaMetaData } = req.body;
+    const { syncCode } = req.body;
 
     dbConnect()
     .then((connection) => {
         
-        console.log(codeOne, codeTwo)
+        console.log(syncCode)
 
         // once we have alexa sending codes we'd need to find the user's profile who initiated the sync
 
