@@ -39,13 +39,13 @@ router.post('/sync-profile', function(req, res, next) {
 
     dbConnect()
     .then((connection) => {
-        
         console.log(syncCode)
-
-        // once we have alexa sending codes we'd need to find the user's profile who initiated the sync
-
+        return connection.collection(ALEXA_SYNC_CODES_TABLE).find({ syncCode }).toArray();
+    })
+    .then((arrCodes) => {
         res.send({
-            message: 'ok'
+            message: 'ok',
+            len: arrCodes.length,
         });
     })
     .catch((err) => {
