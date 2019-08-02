@@ -44,8 +44,7 @@ router.post('/sync-profile', function(req, res, next) {
     })
     .then((arrCodes) => {
         res.send({
-            message: 'ok',
-            len: arrCodes,
+            arrCodes: JSON.stringify(arrCodes),
         });
     })
     .catch((err) => {
