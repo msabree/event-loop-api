@@ -16,7 +16,7 @@ router.get('/verification-codes', function(req, res, next) {
         STORE.syncCode = syncCode;
         return connection.collection(ALEXA_SYNC_CODES_TABLE).insertOne({
             userId: 'userABC',
-            syncCode,
+            syncCode: syncCode.toString(),
         });
     })
     .then(() => {
@@ -45,7 +45,7 @@ router.post('/sync-profile', function(req, res, next) {
     .then((arrCodes) => {
         res.send({
             message: 'ok',
-            len: arrCodes.length,
+            len: arrCodes,
         });
     })
     .catch((err) => {
