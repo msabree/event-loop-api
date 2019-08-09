@@ -8,6 +8,7 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
 
 const dbConnect = require('../utils/dbConnect');
+const getSession = require('../utils/getSession');
 const USERS_TABLE = 'users';
 
 router.get('/verification/:phoneNumber/:code', function(req, res, next) {
@@ -46,6 +47,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
                 const objUser = {
                     userId: uuidv1(), // this is a static reference
                     sessionToken,
+                    phoneNumber,
                     profilePic: null,
                     joined: new Date().toISOString(),
                     legalName: '', // optional
@@ -86,12 +88,64 @@ router.get('/verification/:phoneNumber', function(req, res, next) {
     client.verify.services(process.env.TWILIO_SERVICE_ID)
     .verifications
     .create({to: phoneNumber, channel: 'sms'})
-    .then(verification => console.log(verification.sid))
-    .catch(err => console.log(err))
-
-    res.send('ok')
+    .then((verification) => {
+        res.send({
+            success: true,
+            sid: verification.sid,
+            message: ''
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
 });
 
+router.get('/search/:sessionToken/:query', function(req, res, next) {
 
+    const { sessionToken, query } = req.params;
+    const STORE = {};
+
+    dbConnect()
+    .then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((userObj) => {
+        STORE.userObj = userObj;
+        return STORE.connection.collection(USERS_TABLE).find({ $or: [{ username: query }, { phoneNumber: query }] }).toArray();
+    })
+    .then((arrMatchedUsers) => {
+        if(arrMatchedUsers.length > 1){
+            throw new Error('too many matches'); // query SHOULD exact match only and these props SHOULD be unique
+        }
+        else if(arrMatchedUsers.length === 0){
+            res.send({
+                success: false,
+                message: 'No matches',
+                user: {
+                   username: arrMatchedUsers[0].username,
+                   phoneNumber: arrMatchedUsers[0].phoneNumber,
+                   userId: arrMatchedUsers[0].userId,
+                }
+            })
+        }
+        else {
+            res.send({
+                success: true,
+                message: '',
+                user: null
+            })
+        }
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
 
 module.exports = router;
