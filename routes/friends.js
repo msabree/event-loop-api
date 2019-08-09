@@ -5,6 +5,7 @@ const uuidv1 = require('uuid/v1');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
 
+const FRIENDS_REQUESTS_TABLE = 'friend-requests';
 const FRIENDS_TABLE = 'friends';
 
 router.get('/:sessionToken', function(req, res, next) {
@@ -19,7 +20,7 @@ router.get('/:sessionToken', function(req, res, next) {
 
 router.post('/request', function(req, res, next) {
 
-    const { sessionToken, userId } = req.body;
+    const { sessionToken, friendUserId } = req.body;
     const STORE = {};
 
     dbConnect()
@@ -31,14 +32,13 @@ router.post('/request', function(req, res, next) {
         const requestId = uuidv1();
         STORE.requestId = requestId;
 
-        const friendObj = {
+        const friendRequestObj = {
+            userId: userObj.userId,
             requestId,
-            userId,
+            friendUserId,
             dateRequested: new Date().toISOString(),
-            status: 'request',
-            dateConfirmed: null,
         }
-        return STORE.connection.collection(FRIENDS_TABLE).update({ userId: userObj.userId }, { $push: { friends: {friendObj} } })
+        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).insert(friendRequestObj);
     })
     .then(() => {
         res.send({
@@ -63,35 +63,30 @@ router.post('/request-response', function(req, res, next) {
         return getSession(sessionToken, connection);
     })
     .then((userObj) => {
-        return STORE.connection.collection(FRIENDS_TABLE).find({ userId: userObj.userId }).toArray();
+        STORE.userObj = userObj;
+        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({ requestId }).toArray();
     })
-    .catch((arrUserFriends) => {
-        if(arrUserFriends.length !== 1){
-            throw new Error('too many matches in friends table')
+    .catch((arrRequests) => {
+        if(arrRequests.length !== 1){
+            throw new Error('Too many matches for friend request id')
         }
         else{
-            const friends = arrUserFriends[0].friends;
-            let removeIndex = -1;
-            for(let i = 0; i < friends.length; i++){
-                if(friends[i].requestId === requestId){
-                    if(isConfirmed){
-                        friends[i].status = 'confirmed';
-                        friends[i].dateConfirmed = new Date().toISOString();
-                    }
-                    else{
-                        removeIndex = i;
-                    }
-
-                    break;
-                } 
+            STORE.request = arrRequests[0];
+            if(isConfirmed === true){
+                const friendObj = {
+                    userId: STORE.userObj.userId,
+                    friendUserId: STORE.request.friendUserId,
+                    dateAdded: new Date().toISOString(),
+                }
+                return STORE.connection.collection(FRIENDS_TABLE).insert(friendObj);
             }
-
-            if(removeIndex !== -1){
-                friends.splice(removeIndex, 1);
+            else{
+                return Promise.resolve();
             }
         }
-
-        return STORE.connection.collection(FRIENDS_TABLE).update({ userId: userObj.userId }, { $set: { friends } })
+    })
+    .then(() => {
+        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).remove({requestId});
     })
     .then(() => {
         res.send({
