@@ -66,7 +66,7 @@ router.post('/request-response', function(req, res, next) {
         STORE.userObj = userObj;
         return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({ requestId }).toArray();
     })
-    .catch((arrRequests) => {
+    .then((arrRequests) => {
         if(arrRequests.length !== 1){
             throw new Error('Too many matches for friend request id')
         }
