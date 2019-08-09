@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-const uuidv1 = require('uuid/v1');
+const uuidv4 = require('uuid/v4');
 
 // TWILIO
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -35,7 +35,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
     .then((verification_check) => {
         if(verification_check.status === 'approved'){
 
-            const sessionToken = uuidv1(); // this can rotate
+            const sessionToken = uuidv4(); // this can rotate
             STORE.sessionToken = sessionToken;
 
             if(STORE.arrUsers.length === 1){
@@ -45,7 +45,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
             else {
                 // account does NOT exists, create a new profile and return session
                 const objUser = {
-                    userId: uuidv1(), // this is a static reference
+                    userId: uuidv4(), // this is a static reference
                     sessionToken,
                     phoneNumber,
                     profilePic: 'https://flaker-images.s3.amazonaws.com/default-profile.png',

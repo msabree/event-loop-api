@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-const uuidv1 = require('uuid/v1');
+const uuidv4 = require('uuid/v4');
 const get = require('lodash/get');
 
 const dbConnect = require('../utils/dbConnect');
@@ -41,8 +41,6 @@ router.get('/:sessionToken', function(req, res, next) {
         return STORE.connection.collection(USERS_TABLE).find({userId: {$in: arrRequestsUserIds}}).toArray();
     })
     .then((arrRequestsProfiles) => {
-        console.log(arrRequestsProfiles);
-        console.log(STORE);
         const friendsMap = {};
         for(let i = 0; i < STORE.arrFriendsProfiles.length; i++){
             friendsMap[STORE.arrFriendsProfiles[i].friendUserId] = {
@@ -56,6 +54,8 @@ router.get('/:sessionToken', function(req, res, next) {
                 profilePic: arrRequestsProfiles[i].profilePic,
             }
         }
+
+        console.log(friendsMap)
 
         const friends = STORE.arrFriends.map((friend) => {
             friend._profilePic = friendsMap[friend.friendUserId].profilePic;
@@ -92,7 +92,7 @@ router.post('/request', function(req, res, next) {
         return getSession(sessionToken, connection);
     })
     .then((userObj) => {
-        const requestId = uuidv1();
+        const requestId = uuidv4();
         STORE.requestId = requestId;
 
         const friendRequestObj = {
