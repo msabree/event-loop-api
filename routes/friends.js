@@ -42,7 +42,7 @@ router.get('/:sessionToken', function(req, res, next) {
     })
     .then((arrRequestsProfiles) => {
         console.log(arrRequestsProfiles);
-        console.log(JSON.stringify(STORE));
+        console.log(STORE);
         const friendsMap = {};
         for(let i = 0; i < STORE.arrFriendsProfiles.length; i++){
             friendsMap[STORE.arrFriendsProfiles[i].friendUserId] = {
