@@ -173,10 +173,9 @@ router.delete('/:sessionToken/:userId', function(req, res, next) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        STORE.connection = connection;
         return STORE.connection.collection(FRIENDS_TABLE).remove({userId: objUser.userId, friendUserId: userId});
     })
-    .then((objUser) => {
+    .then(() => {
         res.send({
             message: 'ok'
         })
