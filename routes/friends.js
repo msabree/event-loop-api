@@ -56,6 +56,7 @@ router.post('/request', function(req, res, next) {
 router.post('/request-response', function(req, res, next) {
     
     const { sessionToken, requestId, isConfirmed } = req.body;
+    const STORE = {};
     
     dbConnect()
     .then((connection) => {
