@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-const uuidv1 = require('uuid/v1');
+const uuidv4 = require('uuid/v4');
 
 // TWILIO
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -8,6 +8,7 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
 
 const dbConnect = require('../utils/dbConnect');
+const getSession = require('../utils/getSession');
 const USERS_TABLE = 'users';
 
 router.get('/verification/:phoneNumber/:code', function(req, res, next) {
@@ -34,7 +35,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
     .then((verification_check) => {
         if(verification_check.status === 'approved'){
 
-            const sessionToken = uuidv1(); // this can rotate
+            const sessionToken = uuidv4(); // this can rotate
             STORE.sessionToken = sessionToken;
 
             if(STORE.arrUsers.length === 1){
@@ -44,9 +45,10 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
             else {
                 // account does NOT exists, create a new profile and return session
                 const objUser = {
-                    userId: uuidv1(), // this is a static reference
+                    userId: uuidv4(), // this is a static reference
                     sessionToken,
-                    profilePic: null,
+                    phoneNumber,
+                    profilePic: 'https://flaker-images.s3.amazonaws.com/default-profile.png',
                     joined: new Date().toISOString(),
                     legalName: '', // optional
                     email: '', // optional
@@ -86,12 +88,64 @@ router.get('/verification/:phoneNumber', function(req, res, next) {
     client.verify.services(process.env.TWILIO_SERVICE_ID)
     .verifications
     .create({to: phoneNumber, channel: 'sms'})
-    .then(verification => console.log(verification.sid))
-    .catch(err => console.log(err))
-
-    res.send('ok')
+    .then((verification) => {
+        res.send({
+            success: true,
+            sid: verification.sid,
+            message: ''
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
 });
 
+router.get('/search/:sessionToken/:query', function(req, res, next) {
 
+    const { sessionToken, query } = req.params;
+    const STORE = {};
+
+    dbConnect()
+    .then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((userObj) => {
+        STORE.userObj = userObj;
+        return STORE.connection.collection(USERS_TABLE).find({ $or: [{ username: query }, { phoneNumber: query }] }).toArray();
+    })
+    .then((arrMatchedUsers) => {
+        if(arrMatchedUsers.length > 1){
+            throw new Error('too many matches'); // query SHOULD exact match only and these props SHOULD be unique
+        }
+        else if(arrMatchedUsers.length === 0){
+            res.send({
+                success: false,
+                message: 'No matches',
+                user: {
+                   username: arrMatchedUsers[0].username,
+                   phoneNumber: arrMatchedUsers[0].phoneNumber,
+                   userId: arrMatchedUsers[0].userId,
+                }
+            })
+        }
+        else {
+            res.send({
+                success: true,
+                message: '',
+                user: null
+            })
+        }
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
 
 module.exports = router;
