@@ -43,7 +43,7 @@ router.get('/:sessionToken', function(req, res, next) {
     .then((arrRequestsProfiles) => {
         const friendsMap = {};
         for(let i = 0; i < STORE.arrFriendsProfiles.length; i++){
-            friendsMap[STORE.arrFriendsProfiles[i].friendUserId] = {
+            friendsMap[STORE.arrFriendsProfiles[i].userId] = {
                 profilePic: STORE.arrFriendsProfiles[i].profilePic,
             }
         }
