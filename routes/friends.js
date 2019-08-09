@@ -7,14 +7,75 @@ const getSession = require('../utils/getSession');
 
 const FRIENDS_REQUESTS_TABLE = 'friend-requests';
 const FRIENDS_TABLE = 'friends';
+const USERS_TABLE = 'users';
 
 router.get('/:sessionToken', function(req, res, next) {
+    const { sessionToken } = req.params;
+    const STORE = {};
     dbConnect()
     .then((connection) => {
-        
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
     })
-    .catch(() => {
+    .then((userObj) => {
+        STORE.userObj = userObj;
+        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({userId: userObj.userId}).toArray();
+    })
+    .then((arrRequests) => {
+        STORE.arrRequests = arrRequests;
+        return STORE.connection.collection(FRIENDS_TABLE).insert(friendRequestObj).toArray();
+    })
+    .then((arrFriends) => {
+        STORE.arrFriends = arrFriends;
+        const arrFriendsUserIds = arrFriends.map((friend) => {
+            return friend.friendUserId;
+        })
+        return STORE.connection.collection(USERS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
+    })
+    .then((arrFriendsProfiles) => {
+        STORE.arrFriendsProfiles = arrFriendsProfiles;
+        const arrRequestsUserIds = STORE.arrRequests.map((request) => {
+            return request.friendUserId;
+        })
+        return STORE.connection.collection(USERS_TABLE).find({userId: {$in: arrRequestsUserIds}}).toArray();
+    })
+    .then((arrRequestsProfiles) => {
 
+        const friendsMap = {};
+        for(let i = 0; i < STORE.arrFriendsProfiles.length; i++){
+            friendsMap[STORE.arrFriendsProfiles[0].friendUserId] = {
+                profilePic: STORE.arrFriendsProfiles[0].profilePic,
+            }
+        }
+
+        const requestsMap = {};
+        for(let i = 0; i < arrRequestsProfiles.length; i++){
+            requestsMap[arrRequestsProfiles[0].friendUserId] = {
+                profilePic: arrRequestsProfiles[0].profilePic,
+            }
+        }
+
+        const friends = STORE.arrFriends.map((friend) => {
+            friend._profilePic = friendsMap[friend.friendUserId].profilePic;
+            return friend;
+        })
+
+        const requests = STORE.arrRequests.map((request) => {
+            request._profilePic = requestsMap[request.friendUserId].profilePic;
+            return request;
+        })
+
+        res.send({
+            success: true,
+            requests,
+            friends,
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
     })
 });
 
@@ -103,12 +164,28 @@ router.post('/request-response', function(req, res, next) {
 });
 
 router.delete('/:sessionToken/:userId', function(req, res, next) {
+    const { sessionToken, userId } = req.params;
+    const STORE = {};
+
     dbConnect()
     .then((connection) => {
-        
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
     })
-    .catch(() => {
-
+    .then((objUser) => {
+        STORE.connection = connection;
+        return STORE.connection.collection(FRIENDS_TABLE).remove({userId: objUser.userId, friendUserId: userId});
+    })
+    .then((objUser) => {
+        res.send({
+            message: 'ok'
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
     })
 });
 

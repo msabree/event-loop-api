@@ -48,7 +48,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
                     userId: uuidv1(), // this is a static reference
                     sessionToken,
                     phoneNumber,
-                    profilePic: null,
+                    profilePic: 'https://flaker-images.s3.amazonaws.com/default-profile.png',
                     joined: new Date().toISOString(),
                     legalName: '', // optional
                     email: '', // optional
