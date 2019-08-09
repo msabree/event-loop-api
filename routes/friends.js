@@ -23,7 +23,7 @@ router.get('/:sessionToken', function(req, res, next) {
     })
     .then((arrRequests) => {
         STORE.arrRequests = arrRequests;
-        return STORE.connection.collection(FRIENDS_TABLE).insert(friendRequestObj).toArray();
+        return STORE.connection.collection(FRIENDS_TABLE).find({userId: userObj.userId}).toArray();
     })
     .then((arrFriends) => {
         STORE.arrFriends = arrFriends;
