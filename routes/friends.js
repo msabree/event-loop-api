@@ -45,6 +45,8 @@ router.get('/:sessionToken', function(req, res, next) {
         for(let i = 0; i < STORE.arrFriendsProfiles.length; i++){
             friendsMap[STORE.arrFriendsProfiles[i].userId] = {
                 profilePic: STORE.arrFriendsProfiles[i].profilePic,
+                username: STORE.arrFriendsProfiles[i].username,
+                phoneNumber: STORE.arrFriendsProfiles[i].phoneNumber,
             }
         }
 
@@ -52,10 +54,10 @@ router.get('/:sessionToken', function(req, res, next) {
         for(let i = 0; i < arrRequestsProfiles.length; i++){
             requestsMap[arrRequestsProfiles[i].friendUserId] = {
                 profilePic: arrRequestsProfiles[i].profilePic,
+                username: arrRequestsProfiles[i].username,
+                phoneNumber: arrRequestsProfiles[i].phoneNumber,
             }
         }
-
-        console.log(friendsMap)
 
         const friends = STORE.arrFriends.map((friend) => {
             friend._profilePic = friendsMap[friend.friendUserId].profilePic;
@@ -165,8 +167,8 @@ router.post('/request-response', function(req, res, next) {
     })
 });
 
-router.delete('/:sessionToken/:userId', function(req, res, next) {
-    const { sessionToken, userId } = req.params;
+router.delete('/:sessionToken/:friendUserId', function(req, res, next) {
+    const { sessionToken, friendUserId } = req.params;
     const STORE = {};
 
     dbConnect()
@@ -175,10 +177,11 @@ router.delete('/:sessionToken/:userId', function(req, res, next) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        return STORE.connection.collection(FRIENDS_TABLE).remove({userId: objUser.userId, friendUserId: userId});
+        return STORE.connection.collection(FRIENDS_TABLE).remove({userId: objUser.userId, friendUserId});
     })
     .then(() => {
         res.send({
+            success: true,
             message: 'ok'
         })
     })
