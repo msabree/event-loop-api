@@ -11,6 +11,50 @@ const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
 const USERS_TABLE = 'users';
 
+router.get('/:sessionToken', function(req, res, next) {
+
+    const { sessionToken } = req.params;
+    const STORE = {};
+
+    dbConnect()
+    .then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((arrUsers) => {
+        if(arrUsers.length !== 1){
+            throw new Error('Error fetching user profile.');
+        }
+        const userId = arrUsers[0].userId;
+        return STORE.connection.collection(USERS_TABLE).find({ userId }).toArray();
+    })
+    .then((arrProfiles) => {
+        let profile = null;
+        if(arrProfiles.length === 1){
+            const {
+                username,
+                profilePic,
+            } = arrProfiles[0];
+
+            profile = {
+                username,
+                profilePic
+            }
+        }
+        res.send({
+            success: true,
+            profile,
+            message: ''
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
 router.get('/verification/:phoneNumber/:code', function(req, res, next) {
 
     const { phoneNumber, code } = req.params;
