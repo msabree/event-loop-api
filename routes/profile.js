@@ -15,11 +15,8 @@ router.get('/:sessionToken', function(req, res, next) {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
-    .then((arrUsers) => {
-        if(arrUsers.length !== 1){
-            throw new Error('Error fetching user profile.');
-        }
-        const userId = arrUsers[0].userId;
+    .then((objUser) => {
+        const userId = objUser.userId;
         return STORE.connection.collection(PROFILE_TABLE).find({ userId }).toArray();
     })
     .then((arrProfiles) => {
@@ -51,13 +48,10 @@ router.put('/:sessionToken', function(req, res, next) {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
-    .then((arrUsers) => {
-        if(arrUsers.length !== 1){
-            throw new Error('Error fetching user profile.');
-        }
-        const userId = arrUsers[0].userId;
+    .then((userObj) => {
+        const userId = userObj.userId;
         // req.body should only contain fields getting updated.
-        return STORE.connection.collection(PROFILE_TABLE).updateOne({ userId }, {$set: req.body});
+        return STORE.connection.collection(PROFILE_TABLE).updateOne({ userId }, {$set: req.body}, {upsert: true});
     })
     .then(() => {
         res.send({

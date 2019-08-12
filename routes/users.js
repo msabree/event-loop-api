@@ -21,11 +21,8 @@ router.get('/:sessionToken', function(req, res, next) {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
-    .then((arrUsers) => {
-        if(arrUsers.length !== 1){
-            throw new Error('Error fetching user profile.');
-        }
-        const userId = arrUsers[0].userId;
+    .then((objUser) => {
+        const userId = objUser.userId;
         return STORE.connection.collection(USERS_TABLE).find({ userId }).toArray();
     })
     .then((arrProfiles) => {
