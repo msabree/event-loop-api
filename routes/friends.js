@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 const uuidv4 = require('uuid/v4');
-const get = require('lodash/get');
 
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
@@ -60,11 +59,13 @@ router.get('/:sessionToken', function(req, res, next) {
 
         const friends = STORE.arrFriends.map((friend) => {
             friend._profilePic = friendsMap[friend.friendUserId].profilePic;
+            friend._username = friendsMap[friend.friendUserId].username;
             return friend;
         })
 
         const requests = STORE.arrRequests.map((request) => {
             request._profilePic = requestsMap[request.requestorUserId].profilePic;
+            request._username = requestsMap[request.requestorUserId].username;
             return request;
         })
 
