@@ -16,8 +16,7 @@ router.get('/:sessionToken', function(req, res, next) {
     const { sessionToken } = req.params;
     const STORE = {};
 
-    dbConnect()
-    .then((connection) => {
+    dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
@@ -57,8 +56,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
     const { phoneNumber, code } = req.params;
     const STORE = {};
 
-    dbConnect()
-    .then((connection) => {
+    dbConnect.then((connection) => {
         STORE.connection = connection;
         return connection.collection(USERS_TABLE).find({ phoneNumber }).toArray();
     })
@@ -149,8 +147,7 @@ router.get('/search/:sessionToken/:query', function(req, res, next) {
     const { sessionToken, query } = req.params;
     const STORE = {};
 
-    dbConnect()
-    .then((connection) => {
+    dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })

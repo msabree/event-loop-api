@@ -13,8 +13,7 @@ const USERS_TABLE = 'users';
 router.get('/:sessionToken', function(req, res, next) {
     const { sessionToken } = req.params;
     const STORE = {};
-    dbConnect()
-    .then((connection) => {
+    dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
@@ -88,8 +87,7 @@ router.post('/request', function(req, res, next) {
     const { sessionToken, friendUserId } = req.body;
     const STORE = {};
 
-    dbConnect()
-    .then((connection) => {
+    dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
@@ -123,8 +121,7 @@ router.post('/request-response', function(req, res, next) {
     const { sessionToken, requestId, isConfirmed } = req.body;
     const STORE = {};
     
-    dbConnect()
-    .then((connection) => {
+    dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
@@ -171,8 +168,7 @@ router.delete('/:sessionToken/:friendUserId', function(req, res, next) {
     const { sessionToken, friendUserId } = req.params;
     const STORE = {};
 
-    dbConnect()
-    .then((connection) => {
+    dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })

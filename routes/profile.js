@@ -10,8 +10,7 @@ router.get('/:sessionToken', function(req, res, next) {
     const { sessionToken } = req.params;
     const STORE = {};
 
-    dbConnect()
-    .then((connection) => {
+    dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
@@ -51,8 +50,7 @@ router.put('/:sessionToken', function(req, res, next) {
     const { sessionToken } = req.params;
     const STORE = {};
 
-    dbConnect()
-    .then((connection) => {
+    dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
