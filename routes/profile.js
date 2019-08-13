@@ -22,7 +22,15 @@ router.get('/:sessionToken', function(req, res, next) {
     .then((arrProfiles) => {
         let profile = {};
         if(arrProfiles.length === 1){
-            profile = arrProfiles[0];
+            const {
+                location,
+                status,
+            } = arrProfiles[0];
+
+            profile = {
+                location,
+                status,
+            }
         }
         res.send({
             success: true,

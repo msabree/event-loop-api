@@ -26,7 +26,7 @@ router.get('/:sessionToken', function(req, res, next) {
         return STORE.connection.collection(USERS_TABLE).find({ userId }).toArray();
     })
     .then((arrProfiles) => {
-        let profile = null;
+        let profile = {};
         if(arrProfiles.length === 1){
             const {
                 username,
@@ -166,18 +166,18 @@ router.get('/search/:sessionToken/:query', function(req, res, next) {
             res.send({
                 success: false,
                 message: 'No matches',
-                user: {
-                   username: arrMatchedUsers[0].username,
-                   phoneNumber: arrMatchedUsers[0].phoneNumber,
-                   userId: arrMatchedUsers[0].userId,
-                }
+                user: null
             })
         }
         else {
             res.send({
                 success: true,
                 message: '',
-                user: null
+                user: {
+                    username: arrMatchedUsers[0].username,
+                    phoneNumber: arrMatchedUsers[0].phoneNumber,
+                    userId: arrMatchedUsers[0].userId,
+                }
             })
         }
     })
