@@ -34,10 +34,10 @@ router.get('/:sessionToken', function(req, res, next) {
     })
     .then((arrFriendsProfiles) => {
         STORE.arrFriendsProfiles = arrFriendsProfiles;
-        const arrRequestsUserIds = STORE.arrRequests.map((request) => {
-            return request.friendUserId;
+        const arrRequestorUserIds = STORE.arrRequests.map((request) => {
+            return request.requestorUserId;
         })
-        return STORE.connection.collection(USERS_TABLE).find({userId: {$in: arrRequestsUserIds}}).toArray();
+        return STORE.connection.collection(USERS_TABLE).find({userId: {$in: arrRequestorUserIds}}).toArray();
     })
     .then((arrRequestsProfiles) => {
         const friendsMap = {};
@@ -51,7 +51,7 @@ router.get('/:sessionToken', function(req, res, next) {
 
         const requestsMap = {};
         for(let i = 0; i < arrRequestsProfiles.length; i++){
-            requestsMap[arrRequestsProfiles[i].friendUserId] = {
+            requestsMap[arrRequestsProfiles[i].userId] = {
                 profilePic: arrRequestsProfiles[i].profilePic,
                 username: arrRequestsProfiles[i].username,
                 phoneNumber: arrRequestsProfiles[i].phoneNumber,
@@ -64,7 +64,7 @@ router.get('/:sessionToken', function(req, res, next) {
         })
 
         const requests = STORE.arrRequests.map((request) => {
-            request._profilePic = requestsMap[request.friendUserId].profilePic;
+            request._profilePic = requestsMap[request.requestorUserId].profilePic;
             return request;
         })
 
@@ -96,15 +96,16 @@ router.post('/request', function(req, res, next) {
         STORE.requestId = requestId;
 
         const friendRequestObj = {
-            userId: userObj.userId,
+            userId: friendUserId, // owner of account is the friend you want to ask for access 
             requestId,
-            friendUserId,
+            requestorUserId: userObj.userId, // current user is the requestor
             dateRequested: new Date().toISOString(),
         }
         return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).insert(friendRequestObj);
     })
     .then(() => {
         res.send({
+            success: true,
             message: 'ok'
         })
     })
@@ -138,7 +139,7 @@ router.post('/request-response', function(req, res, next) {
             if(isConfirmed === true){
                 const friendObj = {
                     userId: STORE.userObj.userId,
-                    friendUserId: STORE.request.friendUserId,
+                    friendUserId: STORE.request.requestorUserId,
                     dateAdded: new Date().toISOString(),
                 }
                 return STORE.connection.collection(FRIENDS_TABLE).insert(friendObj);
