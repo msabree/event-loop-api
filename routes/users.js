@@ -19,6 +19,8 @@ const USERS_TABLE = 'users';
 const uploadPhotoToS3 = (updateFields, sessionToken) => {
     return new Promise((resolve, reject) => {
         const base64ProfilePic = get(updateFields, 'profilePic', null);
+        console.log('UPLOAD TO S3')
+        console.log(base64ProfilePic)
         if (base64ProfilePic !== null) {
             const buf = new Buffer(base64ProfilePic.replace(/^data:image\/\w+;base64,/, ''), 'base64');
             const base64Photo = {
@@ -31,7 +33,7 @@ const uploadPhotoToS3 = (updateFields, sessionToken) => {
                 if (err) {
                     reject(err);
                 } else {
-                    updateFields.profilePic = `https://s3.amazonaws.com/aliaspayio-images/${sessionToken}?timestamp=${new Date().getTime()}`;
+                    updateFields.profilePic = `https://s3.amazonaws.com/flaker-images/${sessionToken}?timestamp=${new Date().getTime()}`;
                     resolve(updateFields);
                 }
             });
@@ -121,6 +123,7 @@ router.put('/:sessionToken', function(req, res, next) {
         // EXACT COPY IN GET
     })
     .catch((err) => {
+        console.log(err);
         res.send({
             success: false,
             message: err.message || err

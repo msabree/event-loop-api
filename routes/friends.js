@@ -45,7 +45,7 @@ router.get('/:sessionToken', function(req, res, next) {
                 profilePic: STORE.arrFriendsProfiles[i].profilePic,
                 username: STORE.arrFriendsProfiles[i].username,
                 phoneNumber: STORE.arrFriendsProfiles[i].phoneNumber,
-                legalName: STORE.arrFriendsProfiles[i].legalName,
+                displayName: STORE.arrFriendsProfiles[i].displayName,
             }
         }
 
@@ -55,21 +55,21 @@ router.get('/:sessionToken', function(req, res, next) {
                 profilePic: arrRequestsProfiles[i].profilePic,
                 username: arrRequestsProfiles[i].username,
                 phoneNumber: arrRequestsProfiles[i].phoneNumber,
-                legalName: arrRequestsProfiles[i].legalName,
+                displayName: arrRequestsProfiles[i].displayName,
             }
         }
 
         const friends = STORE.arrFriends.map((friend) => {
             friend._profilePic = friendsMap[friend.friendUserId].profilePic;
             friend._username = friendsMap[friend.friendUserId].username;
-            friend._legalName = friendsMap[friend.friendUserId].legalName;
+            friend._displayName = friendsMap[friend.friendUserId].displayName;
             return friend;
         })
 
         const requests = STORE.arrRequests.map((request) => {
             request._profilePic = requestsMap[request.requestorUserId].profilePic;
             request._username = requestsMap[request.requestorUserId].username;
-            request._legalName = requestsMap[request.requestorUserId].legalName;
+            request._displayName = requestsMap[request.requestorUserId].displayName;
             return request;
         })
 

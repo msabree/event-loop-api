@@ -80,7 +80,7 @@ router.get('/friends/:sessionToken', function(req, res, next) {
             friendsUsersObjsMap[arrFriendsUserObjs[i].userId] = {
                 profilePic: arrFriendsUserObjs[i].profilePic,
                 username: arrFriendsUserObjs[i].username,
-                legalName: arrFriendsUserObjs[i].legalName,
+                displayName: arrFriendsUserObjs[i].displayName,
             }
         }
 
@@ -88,7 +88,7 @@ router.get('/friends/:sessionToken', function(req, res, next) {
             return {
                 profilePic: friendsUsersObjsMap[profile.userId].profilePic,
                 username: friendsUsersObjsMap[profile.userId].username,
-                legalName: friendsUsersObjsMap[profile.userId].legalName,
+                displayName: friendsUsersObjsMap[profile.userId].displayName,
                 location: profile.location,
                 status: profile.status,
             }
