@@ -19,8 +19,6 @@ const USERS_TABLE = 'users';
 const uploadPhotoToS3 = (updateFields, sessionToken) => {
     return new Promise((resolve, reject) => {
         const base64ProfilePic = get(updateFields, 'profilePic', null);
-        console.log('UPLOAD TO S3')
-        console.log(base64ProfilePic)
         if (base64ProfilePic !== null) {
             const buf = new Buffer(base64ProfilePic.replace(/^data:image\/\w+;base64,/, ''), 'base64');
             const base64Photo = {
@@ -123,7 +121,6 @@ router.put('/:sessionToken', function(req, res, next) {
         // EXACT COPY IN GET
     })
     .catch((err) => {
-        console.log(err);
         res.send({
             success: false,
             message: err.message || err
@@ -200,7 +197,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
     })
 });
 
-router.get('/verification/:phoneNumber', function(req, res, next) {
+router.post('/verification/:phoneNumber', function(req, res, next) {
 
     const { phoneNumber } = req.params;
 
