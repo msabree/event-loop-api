@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const uuidv4 = require('uuid/v4');
+const findIndex = require('lodash/findIndex');
 
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
@@ -97,21 +98,41 @@ router.post('/request', function(req, res, next) {
         return getSession(sessionToken, connection);
     })
     .then((userObj) => {
-        const requestId = uuidv4();
-        STORE.requestId = requestId;
-
-        const friendRequestObj = {
-            userId: friendUserId, // owner of account is the friend you want to ask for access 
-            requestId,
-            requestorUserId: userObj.userId, // current user is the requestor
-            dateRequested: new Date().toISOString(),
+        STORE.userObj = userObj;
+        return STORE.connection.collection(FRIENDS_TABLE).find({userId: userObj.userId}).toArray();
+    })
+    .then((arrFriends) => {
+        const foundIndex = findIndex(arrFriends, (friend) => {return friend.friendUserId === friendUserId});
+        if(foundIndex === -1){
+            // not a friend yet... check for pending requests...
+            return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({userId: STORE.userObj.userId}).toArray();
         }
-        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).insert(friendRequestObj);
+        else{
+            throw new Error('friends');
+        }
+    })
+    .then((arrRequests) => {
+        const foundIndex = findIndex(arrRequests, (request) => {return request.requestorUserId === STORE.userObj.userId});
+        if(foundIndex === -1){
+            const requestId = uuidv4();
+            STORE.requestId = requestId;
+    
+            const friendRequestObj = {
+                userId: friendUserId, // owner of account is the friend you want to ask for access 
+                requestId,
+                requestorUserId: STORE.userObj.userId, // current user is the requestor
+                dateRequested: new Date().toISOString(),
+            }
+            return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).insert(friendRequestObj);
+        }
+        else{
+            throw new Error('requested')
+        }
     })
     .then(() => {
         res.send({
             success: true,
-            message: 'ok'
+            message: 'ok',
         })
     })
     .catch((err) => {
@@ -159,7 +180,8 @@ router.post('/request-response', function(req, res, next) {
     })
     .then(() => {
         res.send({
-            message: 'ok'
+            success: true,
+            message: '',
         })        
     })
     .catch((err) => {
