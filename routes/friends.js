@@ -103,6 +103,7 @@ router.post('/request', function(req, res, next) {
     })
     .then((arrFriends) => {
         const foundIndex = findIndex(arrFriends, (friend) => {return friend.friendUserId === friendUserId});
+        console.log(foundIndex, arrFriends, friendUserId)
         if(foundIndex === -1){
             // not a friend yet... check for pending requests...
             return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({userId: STORE.userObj.userId}).toArray();
@@ -113,6 +114,7 @@ router.post('/request', function(req, res, next) {
     })
     .then((arrRequests) => {
         const foundIndex = findIndex(arrRequests, (request) => {return request.requestorUserId === STORE.userObj.userId});
+        console.log(foundIndex, arrRequests, STORE.userObj.userId)
         if(foundIndex === -1){
             const requestId = uuidv4();
             STORE.requestId = requestId;
@@ -123,7 +125,7 @@ router.post('/request', function(req, res, next) {
                 requestorUserId: STORE.userObj.userId, // current user is the requestor
                 dateRequested: new Date().toISOString(),
             }
-            return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).insert(friendRequestObj);
+            return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).insertOne(friendRequestObj);
         }
         else{
             throw new Error('requested')
@@ -176,7 +178,7 @@ router.post('/request-response', function(req, res, next) {
         }
     })
     .then(() => {
-        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).remove({requestId});
+        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).deleteOne({requestId});
     })
     .then(() => {
         res.send({
