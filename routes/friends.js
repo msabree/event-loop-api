@@ -113,7 +113,9 @@ router.post('/request', function(req, res, next) {
         }
     })
     .then((arrRequests) => {
-        const foundIndex = findIndex(arrRequests, (request) => {return request.requestorUserId === STORE.userObj.userId});
+        const foundIndex = findIndex(arrRequests, (request) => {
+            return request.requestorUserId === STORE.userObj.userId && request.userId === friendUserId;
+        });
         console.log(foundIndex, arrRequests, STORE.userObj.userId)
         if(foundIndex === -1){
             const requestId = uuidv4();
