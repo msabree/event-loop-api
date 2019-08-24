@@ -103,7 +103,6 @@ router.post('/request', function(req, res, next) {
     })
     .then((arrFriends) => {
         const foundIndex = findIndex(arrFriends, (friend) => {return friend.friendUserId === friendUserId});
-        console.log(foundIndex, arrFriends, friendUserId)
         if(foundIndex === -1){
             // not a friend yet... check for pending requests...
             return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({requestorUserId: STORE.userObj.userId}).toArray();
@@ -116,7 +115,6 @@ router.post('/request', function(req, res, next) {
         const foundIndex = findIndex(arrRequests, (request) => {
             return request.requestorUserId === STORE.userObj.userId && request.userId === friendUserId;
         });
-        console.log(foundIndex, arrRequests, STORE.userObj.userId)
         if(foundIndex === -1){
             const requestId = uuidv4();
             STORE.requestId = requestId;
@@ -214,11 +212,10 @@ router.delete('/:sessionToken/:friendUserId', function(req, res, next) {
     })
     .then((objUser) => {
         // delete both objects to ensure removed from both user's perspectives
-        const friendsObjs = [
-            {userId: objUser.userId, friendUserId},
-            {userId: friendUserId, friendUserId: objUser.userId},
-        ]
-        return STORE.connection.collection(FRIENDS_TABLE).deleteMany(friendsObjs);
+        return Promise.all([
+            STORE.connection.collection(FRIENDS_TABLE).deleteOne({userId: objUser.userId, friendUserId}),
+            STORE.connection.collection(FRIENDS_TABLE).deleteOne({userId: friendUserId, friendUserId: objUser.userId}),
+        ])
     })
     .then(() => {
         res.send({
