@@ -211,7 +211,12 @@ router.delete('/:sessionToken/:friendUserId', function(req, res, next) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        return STORE.connection.collection(FRIENDS_TABLE).remove({userId: objUser.userId, friendUserId});
+        // delete both objects to ensure removed from both user's perspectives
+        const friendsObjs = [
+            {userId: objUser.userId, friendUserId},
+            {userId: friendUserId, friendUserId: objUser.userId},
+        ]
+        return STORE.connection.collection(FRIENDS_TABLE).deleteMany(friendsObjs);
     })
     .then(() => {
         res.send({
