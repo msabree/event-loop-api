@@ -106,7 +106,7 @@ router.post('/request', function(req, res, next) {
         console.log(foundIndex, arrFriends, friendUserId)
         if(foundIndex === -1){
             // not a friend yet... check for pending requests...
-            return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({userId: STORE.userObj.userId}).toArray();
+            return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({requestorUserId: STORE.userObj.userId}).toArray();
         }
         else{
             throw new Error('friends');
@@ -165,12 +165,20 @@ router.post('/request-response', function(req, res, next) {
         else{
             STORE.request = arrRequests[0];
             if(isConfirmed === true){
-                const friendObj = {
-                    userId: STORE.userObj.userId,
-                    friendUserId: STORE.request.requestorUserId,
-                    dateAdded: new Date().toISOString(),
-                }
-                return STORE.connection.collection(FRIENDS_TABLE).insert(friendObj);
+                // add a friend object for both users
+                const friendObjs = [
+                    {
+                        userId: STORE.userObj.userId,
+                        friendUserId: STORE.request.requestorUserId,
+                        dateAdded: new Date().toISOString(),
+                    },
+                    {
+                        userId: STORE.request.requestorUserId,
+                        friendUserId: STORE.userObj.userId,
+                        dateAdded: new Date().toISOString(),
+                    }
+                ]
+                return STORE.connection.collection(FRIENDS_TABLE).insertMany(friendObjs);
             }
             else{
                 return Promise.resolve();
