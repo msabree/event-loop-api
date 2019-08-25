@@ -15,6 +15,7 @@ const client = require('twilio')(accountSid, authToken);
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
 const USERS_TABLE = 'users';
+const FEEDBACK_TABLE = 'app-feedback';
 
 const uploadPhotoToS3 = (updateFields, sessionToken) => {
     return new Promise((resolve, reject) => {
@@ -254,6 +255,36 @@ router.get('/search/:sessionToken/:query', function(req, res, next) {
                 }
             })
         }
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
+router.post('/app-feedback', function(req, res, next) {
+
+    const { feedback, sessionToken } = req.body;
+    const STORE = {};
+
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((objUser) => {
+        return STORE.connection.collection(FEEDBACK_TABLE).insertOne({
+            feedback,
+            posted: new Date().toISOString(),
+            userId: objUser.userId,
+        });
+    })
+    .then(() => {
+        res.send({
+            success: true,
+            message: 'thanks'
+        })
     })
     .catch((err) => {
         res.send({
