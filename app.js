@@ -9,6 +9,7 @@ var bodyParser = require('body-parser');
 require('dotenv').config()
 
 var index = require('./routes/index');
+var profile = require('./routes/profile');
 var users = require('./routes/users');
 var alexa = require('./routes/alexa');
 var friends = require('./routes/friends');
@@ -22,12 +23,13 @@ app.set('view engine', 'pug');
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
+app.use('/profile', profile);
 app.use('/users', users);
 app.use('/friends', friends);
 app.use('/alexa', alexa);
