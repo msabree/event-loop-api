@@ -1,22 +1,20 @@
+const appConstants = require('./constants');
+
 /**
  * Creates a map for a user's friends list to get associated profile info quickly.
  * @param {String} userId - The user making the request.
  * @param {Object} connection - Open connection to the data store.
 */
-
-const USERS_TABLE = 'users';
-const FRIENDS_TABLE = 'friends';
-
-module.exports = function(userId, connection){
+module.exports = function(connection, userId){
     return new Promise((resolve, reject) => {
         const STORE = {};
-        connection.collection(FRIENDS_TABLE).find({ userId }).toArray()
+        connection.collection(appConstants.FRIENDS_TABLE).find({ userId }).toArray()
         .then((arrFriends) => {
             STORE.arrFriends = arrFriends;
             const arrFriendsUserIds = arrFriends.map((friend) => {
                 return friend.friendUserId;
             })
-            return connection.collection(USERS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
+            return connection.collection(appConstants.USERS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
         })
         .then((arrFriendsProfiles) => {
             const friendsProfileMap = {};
