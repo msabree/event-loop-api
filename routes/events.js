@@ -7,7 +7,7 @@ const getSession = require('../utils/getSession');
 const getFriendsProfiles = require('../utils/getFriendsProfiles');
 
 // Events posted by users or by friends
-router.get('/sessionToken', function(req, res, next) {
+router.get('/:sessionToken', function(req, res, next) {
 
     const { sessionToken } = req.params;
     const STORE = {};
