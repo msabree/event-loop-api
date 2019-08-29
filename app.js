@@ -11,8 +11,9 @@ require('dotenv').config()
 var index = require('./routes/index');
 var profile = require('./routes/profile');
 var users = require('./routes/users');
-var alexa = require('./routes/alexa');
 var friends = require('./routes/friends');
+var events = require('./routes/events');
+var alexa = require('./routes/alexa');
 
 var app = express();
 
@@ -32,6 +33,7 @@ app.use('/', index);
 app.use('/profile', profile);
 app.use('/users', users);
 app.use('/friends', friends);
+app.use('/events', events);
 app.use('/alexa', alexa);
 
 // catch 404 and forward to error handler
