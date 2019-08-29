@@ -65,7 +65,7 @@ router.post('/', function(req, res, next) {
     })
     .then((objUser) => {
         const userId = objUser.userId;
-        return STORE.connection.collection(appConstants.EVENTS_TABLE).inserOne({
+        return STORE.connection.collection(appConstants.EVENTS_TABLE).insertOne({
             userId,
             title, 
             location,
