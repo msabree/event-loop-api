@@ -56,7 +56,7 @@ router.get('/:sessionToken', function(req, res, next) {
 // Auto delete after one day past event date?
 router.post('/', function(req, res, next) {
 
-    const { sessionToken, title, location, purpose, datetime } = req.body;
+    const { sessionToken, title, location, purpose, startDatetime, endDatetime } = req.body;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -71,7 +71,7 @@ router.post('/', function(req, res, next) {
             location,
             purpose,
             startDatetime,
-            endDateTime,
+            endDatetime,
             dateCreated: new Date().toISOString(),
         });
     })
