@@ -70,7 +70,8 @@ router.post('/', function(req, res, next) {
             title, 
             location,
             purpose,
-            datetime,
+            startDatetime,
+            endDateTime,
             dateCreated: new Date().toISOString(),
         });
     })
