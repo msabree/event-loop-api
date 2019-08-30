@@ -32,7 +32,7 @@ router.get('/:sessionToken', function(req, res, next) {
         const formattedEvents = arrEvents.map((event) => {
             if(event.userId === STORE.objUser.userId){
                 // current user created the event
-                event.associatedUserProfile = STORE.objUser[event.userId];
+                event.associatedUserProfile = STORE.objUser;
             }
             else {
                 event.associatedUserProfile = STORE.friendsProfileMap[event.userId];

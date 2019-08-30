@@ -3,12 +3,9 @@ var router = express.Router();
 const uuidv4 = require('uuid/v4');
 const findIndex = require('lodash/findIndex');
 
+const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
-
-const FRIENDS_REQUESTS_TABLE = 'friend-requests';
-const FRIENDS_TABLE = 'friends';
-const USERS_TABLE = 'users';
 
 router.get('/:sessionToken', function(req, res, next) {
     const { sessionToken } = req.params;
@@ -19,25 +16,25 @@ router.get('/:sessionToken', function(req, res, next) {
     })
     .then((userObj) => {
         STORE.userObj = userObj;
-        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({userId: userObj.userId}).toArray();
+        return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).find({userId: userObj.userId}).toArray();
     })
     .then((arrRequests) => {
         STORE.arrRequests = arrRequests;
-        return STORE.connection.collection(FRIENDS_TABLE).find({userId: STORE.userObj.userId}).toArray();
+        return STORE.connection.collection(appConstants.FRIENDS_TABLE).find({userId: STORE.userObj.userId}).toArray();
     })
     .then((arrFriends) => {
         STORE.arrFriends = arrFriends;
         const arrFriendsUserIds = arrFriends.map((friend) => {
             return friend.friendUserId;
         })
-        return STORE.connection.collection(USERS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
+        return STORE.connection.collection(appConstants.USERS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
     })
     .then((arrFriendsProfiles) => {
         STORE.arrFriendsProfiles = arrFriendsProfiles;
         const arrRequestorUserIds = STORE.arrRequests.map((request) => {
             return request.requestorUserId;
         })
-        return STORE.connection.collection(USERS_TABLE).find({userId: {$in: arrRequestorUserIds}}).toArray();
+        return STORE.connection.collection(appConstants.USERS_TABLE).find({userId: {$in: arrRequestorUserIds}}).toArray();
     })
     .then((arrRequestsProfiles) => {
         const friendsMap = {};
@@ -99,13 +96,13 @@ router.post('/request', function(req, res, next) {
     })
     .then((userObj) => {
         STORE.userObj = userObj;
-        return STORE.connection.collection(FRIENDS_TABLE).find({userId: userObj.userId}).toArray();
+        return STORE.connection.collection(appConstants.FRIENDS_TABLE).find({userId: userObj.userId}).toArray();
     })
     .then((arrFriends) => {
         const foundIndex = findIndex(arrFriends, (friend) => {return friend.friendUserId === friendUserId});
         if(foundIndex === -1){
             // not a friend yet... check for pending requests...
-            return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({requestorUserId: STORE.userObj.userId}).toArray();
+            return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).find({requestorUserId: STORE.userObj.userId}).toArray();
         }
         else{
             throw new Error('friends');
@@ -125,7 +122,7 @@ router.post('/request', function(req, res, next) {
                 requestorUserId: STORE.userObj.userId, // current user is the requestor
                 dateRequested: new Date().toISOString(),
             }
-            return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).insertOne(friendRequestObj);
+            return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).insertOne(friendRequestObj);
         }
         else{
             throw new Error('requested')
@@ -156,7 +153,7 @@ router.post('/request-response', function(req, res, next) {
     })
     .then((userObj) => {
         STORE.userObj = userObj;
-        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).find({ requestId }).toArray();
+        return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).find({ requestId }).toArray();
     })
     .then((arrRequests) => {
         if(arrRequests.length !== 1){
@@ -178,7 +175,7 @@ router.post('/request-response', function(req, res, next) {
                         dateAdded: new Date().toISOString(),
                     }
                 ]
-                return STORE.connection.collection(FRIENDS_TABLE).insertMany(friendObjs);
+                return STORE.connection.collection(appConstants.FRIENDS_TABLE).insertMany(friendObjs);
             }
             else{
                 return Promise.resolve();
@@ -186,7 +183,7 @@ router.post('/request-response', function(req, res, next) {
         }
     })
     .then(() => {
-        return STORE.connection.collection(FRIENDS_REQUESTS_TABLE).deleteOne({requestId});
+        return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).deleteOne({requestId});
     })
     .then(() => {
         res.send({
@@ -213,8 +210,8 @@ router.delete('/:sessionToken/:friendUserId', function(req, res, next) {
     .then((objUser) => {
         // delete both objects to ensure removed from both user's perspectives
         return Promise.all([
-            STORE.connection.collection(FRIENDS_TABLE).deleteOne({userId: objUser.userId, friendUserId}),
-            STORE.connection.collection(FRIENDS_TABLE).deleteOne({userId: friendUserId, friendUserId: objUser.userId}),
+            STORE.connection.collection(appConstants.FRIENDS_TABLE).deleteOne({userId: objUser.userId, friendUserId}),
+            STORE.connection.collection(appConstants.FRIENDS_TABLE).deleteOne({userId: friendUserId, friendUserId: objUser.userId}),
         ])
     })
     .then(() => {
