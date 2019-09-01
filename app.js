@@ -9,7 +9,6 @@ var bodyParser = require('body-parser');
 require('dotenv').config()
 
 var index = require('./routes/index');
-var profile = require('./routes/profile');
 var users = require('./routes/users');
 var friends = require('./routes/friends');
 var events = require('./routes/events');
@@ -30,7 +29,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
-app.use('/profile', profile);
 app.use('/users', users);
 app.use('/friends', friends);
 app.use('/events', events);
