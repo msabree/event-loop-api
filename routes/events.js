@@ -30,7 +30,31 @@ router.get('/:sessionToken', function(req, res, next) {
         return STORE.connection.collection(appConstants.EVENTS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
     })
     .then((arrEvents) => {
-        const formattedEvents = arrEvents.map((event) => {
+        STORE.arrEvents = arrEvents;
+
+        // Get all guest lists per event
+        const arrEventIds = arrEvents.map((event) => {
+            return event.eventId;
+        })
+
+        return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).find({eventId: {$in: arrEventIds}}).toArray();
+    })
+    .then((arrEventsGuestList) => {
+
+        const eventGuestListMap = {};
+        for(let i = 0; i < arrEventsGuestList.length; i++){
+            let arrGuestList = eventGuestListMap[arrEventsGuestList[i].eventId];
+            if(arrGuestList === undefined){
+                arrGuestList = [arrEventsGuestList[i].userId];
+            }
+            else{
+                arrGuestList.push(arrEventsGuestList[i].userId);
+            }
+            eventGuestListMap[arrEventsGuestList[i].eventId] = arrGuestList;
+        }
+
+
+        const formattedEvents = STORE.arrEvents.map((event) => {
             if(event.userId === STORE.objUser.userId){
                 // current user created the event
                 event.associatedUserProfile = STORE.objUser;
@@ -38,6 +62,8 @@ router.get('/:sessionToken', function(req, res, next) {
             else {
                 event.associatedUserProfile = STORE.friendsProfileMap[event.userId];
             }
+
+            event.guestList = eventGuestListMap[event.eventId];
             return event;
         })
         res.send({
@@ -45,6 +71,54 @@ router.get('/:sessionToken', function(req, res, next) {
             message: '',
             events: formattedEvents,
         })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
+router.get('/guest-list/:eventId/:sessionToken', function(req, res, next) {
+
+    const { sessionToken, eventId } = req.params;
+    const STORE = {};
+
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then(() => {
+        return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).find({eventId}).toArray();
+    })
+    .then((guestList) => {
+        STORE.guestList = guestList;
+
+        const guestListUserIds = guestList.map((guest) => {
+            return guest.userId;
+        })
+
+        return STORE.connection.collection(appConstants.USERS_TABLE).find({userId: {$in: guestListUserIds}}).toArray();
+    })
+    .then((arrProfiles) => {
+        const profileMap = {};
+        for(let i = 0; i < arrProfiles.length; i++){
+            // DELETE ANY INFO FROM PROFILE THAT SHOULD NOT GET RETURNED TO CLIENT
+            profileMap[arrProfiles[i].userId] = arrProfiles[i];
+        }
+
+        const guestListFormatted = STORE.guestList.map((guest) => {
+            guest.profile = profileMap[guest.userId];
+            return guest;
+        })
+
+        res.send({
+            success: true,
+            guestList: guestListFormatted,
+            message: ''
+        })  
+
     })
     .catch((err) => {
         res.send({
