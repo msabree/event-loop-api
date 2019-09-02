@@ -62,12 +62,14 @@ router.get('/:sessionToken', function(req, res, next) {
                 username,
                 displayName,
                 profilePic,
+                userId,
             } = arrProfiles[0];
 
             profile = {
                 username,
                 displayName,
-                profilePic
+                profilePic,
+                userId,
             }
         }
         res.send({
@@ -105,12 +107,14 @@ router.put('/:sessionToken', function(req, res, next) {
                 username,
                 displayName,
                 profilePic,
+                userId,
             } = arrProfiles[0];
 
             profile = {
                 username,
                 displayName,
-                profilePic
+                profilePic,
+                userId,
             }
         }
         res.send({

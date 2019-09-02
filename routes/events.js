@@ -105,6 +105,9 @@ router.get('/guest-list/:eventId/:sessionToken', function(req, res, next) {
         const profileMap = {};
         for(let i = 0; i < arrProfiles.length; i++){
             // DELETE ANY INFO FROM PROFILE THAT SHOULD NOT GET RETURNED TO CLIENT
+            delete arrProfiles[i].sessionToken;
+            delete arrProfiles[i].pushObject;
+
             profileMap[arrProfiles[i].userId] = arrProfiles[i];
         }
 
