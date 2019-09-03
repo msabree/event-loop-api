@@ -5,7 +5,7 @@ const dbConnect = require('../utils/dbConnect');
 const ALEXA_SYNC_CODES_TABLE = 'alexa';
 
 // Generate codes for a user
-router.get('/verification-codes', function(req, res, next) {
+router.get('/verification-codes', function(_, res) {
 
     const STORE = {};
 
@@ -32,7 +32,7 @@ router.get('/verification-codes', function(req, res, next) {
 });
 
 // Alexa endpoint to sync device with app profile
-router.post('/sync-profile', function(req, res, next) {
+router.post('/sync-profile', function(req, res) {
 
     const { syncCode } = req.body;
 

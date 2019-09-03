@@ -8,7 +8,7 @@ const getSession = require('../utils/getSession');
 const getFriendsProfiles = require('../utils/getFriendsProfiles');
 
 // Events posted by users or by friends
-router.get('/:sessionToken', function(req, res, next) {
+router.get('/:sessionToken', function(req, res) {
 
     const { sessionToken } = req.params;
     const STORE = {};
@@ -53,7 +53,7 @@ router.get('/:sessionToken', function(req, res, next) {
             eventGuestListMap[arrEventsGuestList[i].eventId] = arrGuestList;
         }
 
-
+        // Do something with outdated events
         const formattedEvents = STORE.arrEvents.map((event) => {
             if(event.userId === STORE.objUser.userId){
                 // current user created the event
@@ -80,7 +80,44 @@ router.get('/:sessionToken', function(req, res, next) {
     })
 });
 
-router.get('/guest-list/:eventId/:sessionToken', function(req, res, next) {
+router.delete('/:sessionToken/:eventId', function(req, res) {
+
+    const { sessionToken, eventId } = req.params;
+    const STORE = {};
+
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((objUser) => {
+        STORE.objUser = objUser;
+        const userId = objUser.userId;
+        
+        return STORE.connection.collection(appConstants.EVENTS_TABLE).deleteOne({
+            eventId,
+            userId,
+        });
+    })
+    .then(() => {
+        return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).deleteMany({
+            eventId,
+        });
+    })
+    .then(() => {
+        res.send({
+            success: true,
+            message: '',
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
+router.get('/guest-list/:eventId/:sessionToken', function(req, res) {
 
     const { sessionToken, eventId } = req.params;
     const STORE = {};
@@ -131,7 +168,7 @@ router.get('/guest-list/:eventId/:sessionToken', function(req, res, next) {
     })
 });
 
-router.post('/guest-list', function(req, res, next) {
+router.post('/guest-list', function(req, res) {
 
     const { sessionToken, eventId } = req.body;
     const STORE = {};
@@ -162,7 +199,7 @@ router.post('/guest-list', function(req, res, next) {
     })
 });
 
-router.delete('/guest-list', function(req, res, next) {
+router.delete('/guest-list', function(req, res) {
 
     const { sessionToken, eventId } = req.body;
     const STORE = {};
@@ -192,7 +229,7 @@ router.delete('/guest-list', function(req, res, next) {
     })
 });
 
-router.post('/', function(req, res, next) {
+router.post('/', function(req, res) {
 
     const { sessionToken, title, location, details, startDatetime, endDatetime } = req.body;
     const STORE = {};
