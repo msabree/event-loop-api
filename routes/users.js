@@ -12,10 +12,9 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
 
+const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
-const USERS_TABLE = 'users';
-const FEEDBACK_TABLE = 'app-feedback';
 
 const uploadPhotoToS3 = (updateFields, sessionToken) => {
     return new Promise((resolve, reject) => {
@@ -53,7 +52,7 @@ router.get('/:sessionToken', function(req, res, next) {
     })
     .then((objUser) => {
         const userId = objUser.userId;
-        return STORE.connection.collection(USERS_TABLE).find({ userId }).toArray();
+        return STORE.connection.collection(appConstants.USERS_TABLE).find({ userId }).toArray();
     })
     .then((arrProfiles) => {
         // EXACT COPY IN PUT
@@ -63,12 +62,14 @@ router.get('/:sessionToken', function(req, res, next) {
                 username,
                 displayName,
                 profilePic,
+                userId,
             } = arrProfiles[0];
 
             profile = {
                 username,
                 displayName,
-                profilePic
+                profilePic,
+                userId,
             }
         }
         res.send({
@@ -96,8 +97,8 @@ router.put('/:sessionToken', function(req, res, next) {
         return getSession(sessionToken, connection);
     })
     .then(() => uploadPhotoToS3(req.body, sessionToken))
-    .then((update) => STORE.connection.collection(USERS_TABLE).updateOne({ sessionToken }, { $set: update }))
-    .then(() => STORE.connection.collection(USERS_TABLE).find({ sessionToken }).toArray())
+    .then((update) => STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ sessionToken }, { $set: update }))
+    .then(() => STORE.connection.collection(appConstants.USERS_TABLE).find({ sessionToken }).toArray())
     .then((arrProfiles) => {
         // EXACT COPY IN GET
         let profile = {};
@@ -106,12 +107,14 @@ router.put('/:sessionToken', function(req, res, next) {
                 username,
                 displayName,
                 profilePic,
+                userId,
             } = arrProfiles[0];
 
             profile = {
                 username,
                 displayName,
-                profilePic
+                profilePic,
+                userId,
             }
         }
         res.send({
@@ -136,7 +139,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
 
     dbConnect.then((connection) => {
         STORE.connection = connection;
-        return connection.collection(USERS_TABLE).find({ phoneNumber }).toArray();
+        return connection.collection(appConstants.USERS_TABLE).find({ phoneNumber }).toArray();
     })
     .then((arrUsers) => {
         if(arrUsers.length > 1){
@@ -157,7 +160,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
 
             if(STORE.arrUsers.length === 1){
                 // account exists, send new generated session token
-                return STORE.connection.collection(USERS_TABLE).updateOne({ phoneNumber }, { $set: {sessionToken} });
+                return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ phoneNumber }, { $set: {sessionToken} });
             }
             else {
                 // account does NOT exists, create a new profile and return session
@@ -173,7 +176,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
                     pushObject: {}, // the id for push notifications, this id rotates so we have a route to update it
                 }
 
-                return STORE.connection.collection(USERS_TABLE).insertOne(objUser);
+                return STORE.connection.collection(appConstants.USERS_TABLE).insertOne(objUser);
             }
         }
         else{
@@ -231,7 +234,7 @@ router.get('/search/:sessionToken/:query', function(req, res, next) {
     })
     .then((userObj) => {
         STORE.userObj = userObj;
-        return STORE.connection.collection(USERS_TABLE).find({ $or: [{ username: query }, { phoneNumber: query }] }).toArray();
+        return STORE.connection.collection(appConstants.USERS_TABLE).find({ $or: [{ username: query }, { phoneNumber: query }] }).toArray();
     })
     .then((arrMatchedUsers) => {
         if(arrMatchedUsers.length > 1){
@@ -274,7 +277,7 @@ router.post('/app-feedback', function(req, res, next) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        return STORE.connection.collection(FEEDBACK_TABLE).insertOne({
+        return STORE.connection.collection(appConstants.APP_FEEDBACK_TABLE).insertOne({
             feedback,
             posted: new Date().toISOString(),
             userId: objUser.userId,

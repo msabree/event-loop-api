@@ -1,6 +1,7 @@
 /**
  * Ensure that a sessionToken is valid before returning data from API.
- * @param {String} sessionToken
+ * @param {String} sessionToken - The requesting user's session token string.
+ * @param {Object} connection - An open connection to the data store.
 */
 
 const USERS_TABLE = 'users';
