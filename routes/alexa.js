@@ -6,7 +6,6 @@ const get = require('lodash/get');
 const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
-const getAlexaSession = require('../utils/getAlexaSession');
 
 // Check pairing
 router.get('/sync-code/:sessionToken', function(req, res) {
@@ -152,34 +151,54 @@ router.delete('/sync-code/:sessionToken', function(req, res) {
     .then(() => {
         return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ userId: STORE.objUser.userId }, { $set: {alexaSessionTokenActive: true} })
     })
+    .then(() => {
+        res.send({
+            success: true,
+        });
+    })
     .catch((err) => {
         res.send({
+            success: false,
             message: 'Something went wrong. Please try again later.',
             err,
         });
     })
 });
 
-// TO DO: delete connection from app
+// Called from Alexa to see if session is still active?
+router.get('/connection/:sessionToken', function(req, res) {
+    res.send({
+        success: true,
+    });
+});
 
-router.delete('/events/:alexaSessionToken', function(req, res) {
+router.delete('/connection/:sessionToken', function(req, res) {
 
-    const { alexaSessionToken } = req.params;
+    const { sessionToken } = req.params;
 
     const STORE = {};
     dbConnect.then((connection) => {
         STORE.connection = connection;
-        return getAlexaSession(alexaSessionToken, connection);
+        return getSession(sessionToken, connection);
     })
     .then((objUser) => {
         STORE.objUser = objUser;
+        // DELETE ANY PRE-EXISTING CODES FROM THE DATABASE TO PREVENT CLASHES
+        return STORE.connection.collection(appConstants.ALEXA_SYNC_CODES_TABLE).deleteMany({
+            userId: objUser.userId,
+        });
+    })
+    .then(() => {
+        return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ userId: STORE.objUser.userId }, { $set: {alexaSessionToken: '', alexaSessionTokenActive: false} })
+    })
+    .then(() => {
         res.send({
-            speak: 'You have successfully connected to your profile. Event details will be available soon! Thanks for your patience.',
+            success: true,
         });
     })
     .catch((err) => {
         res.send({
-            speak: err.message || 'Unable to complete request. If problem persists, please repair device using the mobile app.',
+            message: 'Something went wrong. Please try again later.',
             err,
         });
     })

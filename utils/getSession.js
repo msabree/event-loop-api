@@ -8,7 +8,7 @@ const USERS_TABLE = 'users';
 
 module.exports = function(sessionToken, connection){
     return new Promise((resolve, reject) => {
-        connection.collection(USERS_TABLE).find({sessionToken}).toArray()
+        connection.collection(USERS_TABLE).find({ $or: [{ sessionToken }, { alexaSessionToken: sessionToken, alexaSessionTokenActive: true }] }).toArray()
         .then((arrUsers) => {
             if(arrUsers.length === 1){
                 resolve(arrUsers[0]);
