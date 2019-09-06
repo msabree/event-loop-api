@@ -4,5 +4,6 @@ module.exports = {
     FRIENDS_REQUESTS_TABLE: 'friend-requests',
     EVENTS_TABLE: 'events',
     GUEST_LIST_TABLE: 'guest-list',
-    APP_FEEDBACK_TABLE: 'app-feedback'
+    APP_FEEDBACK_TABLE: 'app-feedback',
+    ALEXA_SYNC_CODES_TABLE: 'alexa-sync-codes',
 };

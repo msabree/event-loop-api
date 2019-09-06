@@ -7,7 +7,7 @@ const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
 
-router.get('/:sessionToken', function(req, res, next) {
+router.get('/:sessionToken', function(req, res) {
     const { sessionToken } = req.params;
     const STORE = {};
     dbConnect.then((connection) => {
@@ -85,7 +85,7 @@ router.get('/:sessionToken', function(req, res, next) {
     })
 });
 
-router.post('/request', function(req, res, next) {
+router.post('/request', function(req, res) {
 
     const { sessionToken, friendUserId } = req.body;
     const STORE = {};
@@ -142,7 +142,7 @@ router.post('/request', function(req, res, next) {
     })
 });
 
-router.post('/request-response', function(req, res, next) {
+router.post('/request-response', function(req, res) {
     
     const { sessionToken, requestId, isConfirmed } = req.body;
     const STORE = {};
@@ -199,7 +199,7 @@ router.post('/request-response', function(req, res, next) {
     })
 });
 
-router.delete('/:sessionToken/:friendUserId', function(req, res, next) {
+router.delete('/:sessionToken/:friendUserId', function(req, res) {
     const { sessionToken, friendUserId } = req.params;
     const STORE = {};
 

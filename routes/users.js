@@ -41,7 +41,7 @@ const uploadPhotoToS3 = (updateFields, sessionToken) => {
     });
 }
 
-router.get('/:sessionToken', function(req, res, next) {
+router.get('/:sessionToken', function(req, res) {
 
     const { sessionToken } = req.params;
     const STORE = {};
@@ -87,7 +87,7 @@ router.get('/:sessionToken', function(req, res, next) {
     })
 });
 
-router.put('/:sessionToken', function(req, res, next) {
+router.put('/:sessionToken', function(req, res) {
 
     const { sessionToken } = req.params;
     const STORE = {};
@@ -132,7 +132,7 @@ router.put('/:sessionToken', function(req, res, next) {
     })
 });
 
-router.get('/verification/:phoneNumber/:code', function(req, res, next) {
+router.get('/verification/:phoneNumber/:code', function(req, res) {
 
     const { phoneNumber, code } = req.params;
     const STORE = {};
@@ -201,7 +201,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
     })
 });
 
-router.post('/verification/:phoneNumber', function(req, res, next) {
+router.post('/verification/:phoneNumber', function(req, res) {
 
     const { phoneNumber } = req.params;
 
@@ -223,7 +223,7 @@ router.post('/verification/:phoneNumber', function(req, res, next) {
     })
 });
 
-router.get('/search/:sessionToken/:query', function(req, res, next) {
+router.get('/search/:sessionToken/:query', function(req, res) {
 
     const { sessionToken, query } = req.params;
     const STORE = {};
@@ -267,7 +267,7 @@ router.get('/search/:sessionToken/:query', function(req, res, next) {
     })
 });
 
-router.post('/app-feedback', function(req, res, next) {
+router.post('/app-feedback', function(req, res) {
 
     const { feedback, sessionToken } = req.body;
     const STORE = {};
