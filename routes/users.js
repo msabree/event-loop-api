@@ -174,6 +174,8 @@ router.get('/verification/:phoneNumber/:code', function(req, res) {
                     email: '', // optional
                     username: 'user_' + new Date().getTime(), // pregenerated, can be changed later
                     pushObject: {}, // the id for push notifications, this id rotates so we have a route to update it
+                    alexaSessionToken: '', // We generate this before the user confirms, use with alexaSessionTokenActive flag
+                    alexaSessionTokenActive: false,
                 }
 
                 return STORE.connection.collection(appConstants.USERS_TABLE).insertOne(objUser);

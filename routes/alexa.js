@@ -1,11 +1,60 @@
 var express = require('express');
 var router = express.Router();
+const uuidv4 = require('uuid/v4');
+const get = require('lodash/get');
 
 const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
 
+// Check pairing
 router.get('/sync-code/:sessionToken', function(req, res) {
+
+    const { sessionToken } = req.params;
+
+    const STORE = {};
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((objUser) => {
+        const alexaSessionToken = get(objUser, 'alexaSessionToken', '');
+        const alexaSessionTokenActive = get(objUser, 'alexaSessionTokenActive', false);
+
+        if(alexaSessionTokenActive === true){
+            res.send({
+                success: false,
+                paired: false,
+                message: 'Alexa session already active. Only one connection is supported at a time currently.',
+            });
+        }
+        else if(alexaSessionToken === ''){
+            res.send({
+                success: true,
+                paired: false,
+                message: 'No pairing requests found.',
+            });
+        }
+        else{
+            res.send({
+                success: true,
+                paired: true,
+                message: 'Pairing request found.',
+            });
+        }
+    })
+    .catch((err) => {
+        res.send({
+            message: 'Something went wrong. Please try again later.',
+            paired: false,
+            success: false,
+            err,
+        });
+    })
+});
+
+// Initiate pairing
+router.post('/sync-code/:sessionToken', function(req, res) {
     const { sessionToken } = req.params;
 
     const STORE = {};
@@ -32,37 +81,84 @@ router.get('/sync-code/:sessionToken', function(req, res) {
     .then(() => {
         res.send({
             success: true,
-            syncCode: STORE.syncCode,
+            syncCode: STORE.syncCode.toString(),
         });
     })
     .catch((err) => {
         res.send({
-            message: '',
+            message: 'Unable to generate sync code. Please try again later.',
             success: false,
             err,
         });
     })
 });
 
-// Alexa endpoint to sync device with app profile
-router.post('/sync-profile', function(req, res) {
+// Confirm pairing (request come from Alexa)
+router.put('/sync-code', function(req, res) {
 
     const { syncCode } = req.body;
 
+    const STORE = {};
     dbConnect.then((connection) => {
+        STORE.connection = connection;
         return connection.collection(appConstants.ALEXA_SYNC_CODES_TABLE).find({ syncCode }).toArray();
     })
     .then((arrCodes) => {
-        res.send({
-            arrCodes: JSON.stringify(arrCodes),
-        });
+        if(arrCodes.length !== 1){
+            res.send({
+                success: false,
+                alexaSessionToken: '',
+                speak: 'We were unable to locate this sync code. Please ensure that you have the associated app open. If the app is open please close and reopen the sync page to generate a new code.',
+            });
+        }
+        else{
+            const alexaSessionToken = uuidv4();
+            STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ userId: arrCodes[0].userId }, { $set: {alexaSessionToken} })
+            .then(() => {
+                res.send({
+                    success: true,
+                    alexaSessionToken, // be sure to give it to alexa device to persist in S3 or dynamo (no expiration at the moment)
+                    speak: 'Found matching sync request. Please confirm the connection on your device. Once confirmed the connection will be complete.',
+                }); 
+            })
+        }
     })
     .catch((err) => {
         res.send({
-            message: 'oops',
+            speak: 'Something went wrong in the pairing process. Please try again later.',
             err,
         });
     })
 });
+
+// Delete sync and mark alexa session active
+router.delete('/sync-code/:sessionToken', function(req, res) {
+
+    const { sessionToken } = req.params;
+
+    const STORE = {};
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((objUser) => {
+        STORE.objUser = objUser;
+        // DELETE ANY PRE-EXISTING CODES FROM THE DATABASE TO PREVENT CLASHES
+        return STORE.connection.collection(appConstants.ALEXA_SYNC_CODES_TABLE).deleteMany({
+            userId: objUser.userId,
+        });
+    })
+    .then(() => {
+        return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ userId: STORE.objUser.userId }, { $set: {alexaSessionTokenActive: true} })
+    })
+    .catch((err) => {
+        res.send({
+            message: 'Something went wrong. Please try again later.',
+            err,
+        });
+    })
+});
+
+// TO DO: delete connection from app
 
 module.exports = router;
