@@ -6,6 +6,7 @@ const get = require('lodash/get');
 const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
+const getAlexaSession = require('../utils/getAlexaSession');
 
 // Check pairing
 router.get('/sync-code/:sessionToken', function(req, res) {
@@ -160,5 +161,28 @@ router.delete('/sync-code/:sessionToken', function(req, res) {
 });
 
 // TO DO: delete connection from app
+
+router.delete('/events/:alexaSessionToken', function(req, res) {
+
+    const { alexaSessionToken } = req.params;
+
+    const STORE = {};
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getAlexaSession(alexaSessionToken, connection);
+    })
+    .then((objUser) => {
+        STORE.objUser = objUser;
+        res.send({
+            speak: 'You have successfully connected to your profile. Event details will be available soon! Thanks for your patience.',
+        });
+    })
+    .catch((err) => {
+        res.send({
+            speak: err.message || 'Unable to complete request. If problem persists, please repair device using the mobile app.',
+            err,
+        });
+    })
+});
 
 module.exports = router;
