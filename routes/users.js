@@ -63,6 +63,7 @@ router.get('/:sessionToken', function(req, res) {
                 displayName,
                 profilePic,
                 userId,
+                alexaSessionTokenActive,
             } = arrProfiles[0];
 
             profile = {
@@ -70,6 +71,7 @@ router.get('/:sessionToken', function(req, res) {
                 displayName,
                 profilePic,
                 userId,
+                alexaSessionTokenActive,
             }
         }
         res.send({
@@ -108,6 +110,7 @@ router.put('/:sessionToken', function(req, res) {
                 displayName,
                 profilePic,
                 userId,
+                alexaSessionTokenActive,
             } = arrProfiles[0];
 
             profile = {
@@ -115,6 +118,7 @@ router.put('/:sessionToken', function(req, res) {
                 displayName,
                 profilePic,
                 userId,
+                alexaSessionTokenActive,
             }
         }
         res.send({
