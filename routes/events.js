@@ -171,7 +171,7 @@ router.get('/guest-list/:eventId/:sessionToken', function(req, res) {
 router.post('/guest-list', function(req, res) {
 
     const { sessionToken, event} = req.body;
-    const { eventId, title, startDatetime, userId } = event;
+    const { eventId, title, userId } = event;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -183,7 +183,7 @@ router.post('/guest-list', function(req, res) {
         const currentUserId = objUser.userId;
         return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).insertOne({
             eventId,
-            userId: currentUserId, 
+            userId: currentUserId,
             confirmedDatetime: new Date().toISOString(),
         });
     })
@@ -192,7 +192,7 @@ router.post('/guest-list', function(req, res) {
         return STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).insertOne({
             userId,
             type: 'event-join',
-            message: `${STORE.objUser.username} joined ${title} scheduled for ${startDatetime}.`,
+            message: `${STORE.objUser.username} joined ${title}.`,
             createdDatetime: new Date().toISOString(),
             viewed: false,
         });
@@ -264,6 +264,42 @@ router.post('/', function(req, res) {
             endDatetime: new Date(endDatetime).toISOString(),
             dateCreated: new Date().toISOString(),
         });
+    })
+    .then(() => {
+        res.send({
+            success: true,
+            message: ''
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
+router.put('/:eventId', function(req, res) {
+
+    const { eventId } = req.params;
+    const { sessionToken, title, location, details, startDatetime, endDatetime } = req.body;
+    const STORE = {};
+
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((objUser) => {
+        const userId = objUser.userId;
+        return STORE.connection.collection(appConstants.EVENTS_TABLE).updateOne({ eventId }, { $set: {
+            userId,
+            title, 
+            location,
+            details,
+            startDatetime: new Date(startDatetime).toISOString(),
+            endDatetime: new Date(endDatetime).toISOString(),
+            dateUpdated: new Date().toISOString(),
+        } })
     })
     .then(() => {
         res.send({
