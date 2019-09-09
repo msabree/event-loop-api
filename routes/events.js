@@ -170,7 +170,8 @@ router.get('/guest-list/:eventId/:sessionToken', function(req, res) {
 
 router.post('/guest-list', function(req, res) {
 
-    const { sessionToken, eventId } = req.body;
+    const { sessionToken, event} = req.body;
+    const { eventId, title, startDatetime, userId } = event;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -178,12 +179,25 @@ router.post('/guest-list', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        const userId = objUser.userId;
+        STORE.objUser = objUser;
+        const currentUserId = objUser.userId;
         return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).insertOne({
             eventId,
-            userId, 
+            userId: currentUserId, 
             confirmedDatetime: new Date().toISOString(),
         });
+    })
+    .then(() => {
+        // Notify the event owner that someone joined their event
+        return STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).insertOne({
+            userId,
+            type: 'event-join',
+            message: `${STORE.objUser.username} joined ${title} scheduled for ${startDatetime}.`,
+            createdDatetime: new Date().toISOString(),
+            viewed: false,
+        });
+
+        // to do: add push here
     })
     .then(() => {
         res.send({
