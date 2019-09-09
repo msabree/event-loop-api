@@ -29,3 +29,5 @@ router.get('/:sessionToken', function(req, res) {
         })  
     })
 });
+
+module.exports = router;
