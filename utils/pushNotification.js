@@ -1,3 +1,4 @@
+const uuidv4 = require('uuid/v4');
 const appConstants = require('./constants');
 
 /**
@@ -8,9 +9,11 @@ const appConstants = require('./constants');
  * @param {Object} message - The notification message to send.
 */
 module.exports = function(connection, userId, type, message){
+    console.log(userId, type, message)
     return new Promise((resolve) => {
         // const STORE = {};
         connection.collection(appConstants.NOTIFICATIONS_TABLE).insertOne({
+            notificationId: uuidv4(),
             userId,
             type,
             message,
