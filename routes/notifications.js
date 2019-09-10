@@ -33,13 +33,13 @@ router.get('/:sessionToken', function(req, res) {
 // Mark as read
 router.put('/:sessionToken', function(req, res) {
     const { sessionToken } = req.params;
-    const { notifcationIds } = req.body;
+    const { notificationIds } = req.body;
     const STORE = {};
     dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
-    .then((objUser) => STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).updateMany({ _id: {$in: notifcationIds}, userId: objUser.userId }, { $set: {read: true} }))
+    .then((objUser) => STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).updateMany({ _id: {$in: notificationIds}, userId: objUser.userId }, { $set: {read: true} }))
     .then(() => {
         res.send({
             success: true,
