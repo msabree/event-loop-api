@@ -6,6 +6,7 @@ const findIndex = require('lodash/findIndex');
 const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
+const pushNotification = require('../utils/pushNotification');
 
 router.get('/:sessionToken', function(req, res) {
     const { sessionToken } = req.params;
@@ -127,6 +128,10 @@ router.post('/request', function(req, res) {
         else{
             throw new Error('requested')
         }
+    })
+    .then(() => {
+        // Notify the friend of a new request
+        return pushNotification(STORE.connection, friendUserId, 'friend-request', `${STORE.objUser.username} sent you a friend request.`);
     })
     .then(() => {
         res.send({
