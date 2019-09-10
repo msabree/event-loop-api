@@ -131,7 +131,7 @@ router.post('/request', function(req, res) {
     })
     .then(() => {
         // Notify the friend of a new request
-        return pushNotification(STORE.connection, friendUserId, 'friend-request', `${STORE.objUser.username} sent you a friend request.`);
+        return pushNotification(STORE.connection, friendUserId, 'friend-request', `${STORE.userObj.username} sent you a friend request.`);
     })
     .then(() => {
         res.send({
