@@ -140,6 +140,7 @@ router.post('/request', function(req, res) {
         })
     })
     .catch((err) => {
+        console.log(err);
         res.send({
             success: false,
             message: err.message || err

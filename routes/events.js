@@ -84,6 +84,7 @@ router.get('/:sessionToken', function(req, res) {
 router.delete('/:sessionToken/:eventId', function(req, res) {
 
     const { sessionToken, eventId } = req.params;
+    const { title, guestList } = req.body;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -103,6 +104,14 @@ router.delete('/:sessionToken/:eventId', function(req, res) {
         return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).deleteMany({
             eventId,
         });
+    })
+    .then(() => {
+        // Notify guest list of changes to the event.
+        const promiseNotifications = [];
+        for(let i = 0; i < guestList.length; i++){
+            promiseNotifications.push(pushNotification(STORE.connection, guestList[i], 'changed-event', `${STORE.objUser.username} deleted event ${title}.`))
+        }
+        return Promise.all(promiseNotifications);
     })
     .then(() => {
         res.send({
@@ -208,7 +217,7 @@ router.post('/guest-list', function(req, res) {
 
 router.delete('/guest-list', function(req, res) {
 
-    const { sessionToken } = req.body;
+    const { sessionToken, event } = req.body;
     const { eventId, title, userId } = event;
     const STORE = {};
 
