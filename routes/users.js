@@ -41,7 +41,7 @@ const uploadPhotoToS3 = (updateFields, sessionToken) => {
     });
 }
 
-router.get('/:sessionToken', function(req, res, next) {
+router.get('/:sessionToken', function(req, res) {
 
     const { sessionToken } = req.params;
     const STORE = {};
@@ -63,6 +63,7 @@ router.get('/:sessionToken', function(req, res, next) {
                 displayName,
                 profilePic,
                 userId,
+                alexaSessionTokenActive,
             } = arrProfiles[0];
 
             profile = {
@@ -70,6 +71,7 @@ router.get('/:sessionToken', function(req, res, next) {
                 displayName,
                 profilePic,
                 userId,
+                alexaSessionTokenActive,
             }
         }
         res.send({
@@ -87,7 +89,7 @@ router.get('/:sessionToken', function(req, res, next) {
     })
 });
 
-router.put('/:sessionToken', function(req, res, next) {
+router.put('/:sessionToken', function(req, res) {
 
     const { sessionToken } = req.params;
     const STORE = {};
@@ -108,6 +110,7 @@ router.put('/:sessionToken', function(req, res, next) {
                 displayName,
                 profilePic,
                 userId,
+                alexaSessionTokenActive,
             } = arrProfiles[0];
 
             profile = {
@@ -115,6 +118,7 @@ router.put('/:sessionToken', function(req, res, next) {
                 displayName,
                 profilePic,
                 userId,
+                alexaSessionTokenActive,
             }
         }
         res.send({
@@ -132,7 +136,7 @@ router.put('/:sessionToken', function(req, res, next) {
     })
 });
 
-router.get('/verification/:phoneNumber/:code', function(req, res, next) {
+router.get('/verification/:phoneNumber/:code', function(req, res) {
 
     const { phoneNumber, code } = req.params;
     const STORE = {};
@@ -174,6 +178,8 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
                     email: '', // optional
                     username: 'user_' + new Date().getTime(), // pregenerated, can be changed later
                     pushObject: {}, // the id for push notifications, this id rotates so we have a route to update it
+                    alexaSessionToken: '', // We generate this before the user confirms, use with alexaSessionTokenActive flag
+                    alexaSessionTokenActive: false,
                 }
 
                 return STORE.connection.collection(appConstants.USERS_TABLE).insertOne(objUser);
@@ -201,7 +207,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res, next) {
     })
 });
 
-router.post('/verification/:phoneNumber', function(req, res, next) {
+router.post('/verification/:phoneNumber', function(req, res) {
 
     const { phoneNumber } = req.params;
 
@@ -223,7 +229,7 @@ router.post('/verification/:phoneNumber', function(req, res, next) {
     })
 });
 
-router.get('/search/:sessionToken/:query', function(req, res, next) {
+router.get('/search/:sessionToken/:query', function(req, res) {
 
     const { sessionToken, query } = req.params;
     const STORE = {};
@@ -267,7 +273,7 @@ router.get('/search/:sessionToken/:query', function(req, res, next) {
     })
 });
 
-router.post('/app-feedback', function(req, res, next) {
+router.post('/app-feedback', function(req, res) {
 
     const { feedback, sessionToken } = req.body;
     const STORE = {};

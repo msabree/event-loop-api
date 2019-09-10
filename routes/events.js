@@ -170,7 +170,8 @@ router.get('/guest-list/:eventId/:sessionToken', function(req, res) {
 
 router.post('/guest-list', function(req, res) {
 
-    const { sessionToken, eventId } = req.body;
+    const { sessionToken, event} = req.body;
+    const { eventId, title, userId } = event;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -178,12 +179,25 @@ router.post('/guest-list', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        const userId = objUser.userId;
+        STORE.objUser = objUser;
+        const currentUserId = objUser.userId;
         return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).insertOne({
             eventId,
-            userId, 
+            userId: currentUserId,
             confirmedDatetime: new Date().toISOString(),
         });
+    })
+    .then(() => {
+        // Notify the event owner that someone joined their event
+        return STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).insertOne({
+            userId,
+            type: 'event-join',
+            message: `${STORE.objUser.username} joined ${title}.`,
+            createdDatetime: new Date().toISOString(),
+            read: false,
+        });
+
+        // to do: add push here
     })
     .then(() => {
         res.send({
@@ -201,7 +215,8 @@ router.post('/guest-list', function(req, res) {
 
 router.delete('/guest-list', function(req, res) {
 
-    const { sessionToken, eventId } = req.body;
+    const { sessionToken } = req.body;
+    const { eventId, title, userId } = event;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -209,11 +224,25 @@ router.delete('/guest-list', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        const userId = objUser.userId;
+        STORE.objUser = objUser;
+        const currentUserId = objUser.userId;
         return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).deleteOne({
             eventId,
-            userId,
+            userId: currentUserId,
         });
+    })
+    .then(() => {
+        // Notify the event owner that someone joined their event
+        return STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).insertOne({
+            userId,
+            type: 'event-leave',
+            message: `${STORE.objUser.username} left ${title}.`,
+            createdDatetime: new Date().toISOString(),
+            read: false,
+        });
+
+        // Add push
+        // consider adding a helper function
     })
     .then(() => {
         res.send({
@@ -250,6 +279,42 @@ router.post('/', function(req, res) {
             endDatetime: new Date(endDatetime).toISOString(),
             dateCreated: new Date().toISOString(),
         });
+    })
+    .then(() => {
+        res.send({
+            success: true,
+            message: ''
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
+router.put('/:eventId', function(req, res) {
+
+    const { eventId } = req.params;
+    const { sessionToken, title, location, details, startDatetime, endDatetime } = req.body;
+    const STORE = {};
+
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((objUser) => {
+        const userId = objUser.userId;
+        return STORE.connection.collection(appConstants.EVENTS_TABLE).updateOne({ eventId }, { $set: {
+            userId,
+            title, 
+            location,
+            details,
+            startDatetime: new Date(startDatetime).toISOString(),
+            endDatetime: new Date(endDatetime).toISOString(),
+            dateUpdated: new Date().toISOString(),
+        } })
     })
     .then(() => {
         res.send({
