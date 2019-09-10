@@ -30,4 +30,25 @@ router.get('/:sessionToken', function(req, res) {
     })
 });
 
+// Mark as read
+router.put('/:sessionToken', function(req, res) {
+    const { sessionToken } = req.params;
+    const STORE = {};
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then(() => {
+        res.send({
+            success: true,
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
 module.exports = router;

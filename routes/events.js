@@ -194,7 +194,7 @@ router.post('/guest-list', function(req, res) {
             type: 'event-join',
             message: `${STORE.objUser.username} joined ${title}.`,
             createdDatetime: new Date().toISOString(),
-            viewed: false,
+            read: false,
         });
 
         // to do: add push here
@@ -215,7 +215,8 @@ router.post('/guest-list', function(req, res) {
 
 router.delete('/guest-list', function(req, res) {
 
-    const { sessionToken, eventId } = req.body;
+    const { sessionToken } = req.body;
+    const { eventId, title, userId } = event;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -223,11 +224,25 @@ router.delete('/guest-list', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        const userId = objUser.userId;
+        STORE.objUser = objUser;
+        const currentUserId = objUser.userId;
         return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).deleteOne({
             eventId,
-            userId,
+            userId: currentUserId,
         });
+    })
+    .then(() => {
+        // Notify the event owner that someone joined their event
+        return STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).insertOne({
+            userId,
+            type: 'event-leave',
+            message: `${STORE.objUser.username} left ${title}.`,
+            createdDatetime: new Date().toISOString(),
+            read: false,
+        });
+
+        // Add push
+        // consider adding a helper function
     })
     .then(() => {
         res.send({
