@@ -6,6 +6,7 @@ const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
 const getFriendsProfiles = require('../utils/getFriendsProfiles');
+const pushNotification = require('../utils/pushNotification');
 
 // Events posted by users or by friends
 router.get('/:sessionToken', function(req, res) {
@@ -83,6 +84,7 @@ router.get('/:sessionToken', function(req, res) {
 router.delete('/:sessionToken/:eventId', function(req, res) {
 
     const { sessionToken, eventId } = req.params;
+    const { title, guestList } = req.body;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -102,6 +104,14 @@ router.delete('/:sessionToken/:eventId', function(req, res) {
         return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).deleteMany({
             eventId,
         });
+    })
+    .then(() => {
+        // Notify guest list of changes to the event.
+        const promiseNotifications = [];
+        for(let i = 0; i < guestList.length; i++){
+            promiseNotifications.push(pushNotification(STORE.connection, guestList[i], 'changed-event', `${STORE.objUser.username} deleted event ${title}.`))
+        }
+        return Promise.all(promiseNotifications);
     })
     .then(() => {
         res.send({
@@ -189,15 +199,7 @@ router.post('/guest-list', function(req, res) {
     })
     .then(() => {
         // Notify the event owner that someone joined their event
-        return STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).insertOne({
-            userId,
-            type: 'event-join',
-            message: `${STORE.objUser.username} joined ${title}.`,
-            createdDatetime: new Date().toISOString(),
-            read: false,
-        });
-
-        // to do: add push here
+        return pushNotification(STORE.connection, userId, 'joined-event', `${STORE.objUser.username} joined ${title}.`);
     })
     .then(() => {
         res.send({
@@ -215,7 +217,7 @@ router.post('/guest-list', function(req, res) {
 
 router.delete('/guest-list', function(req, res) {
 
-    const { sessionToken } = req.body;
+    const { sessionToken, event } = req.body;
     const { eventId, title, userId } = event;
     const STORE = {};
 
@@ -232,17 +234,8 @@ router.delete('/guest-list', function(req, res) {
         });
     })
     .then(() => {
-        // Notify the event owner that someone joined their event
-        return STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).insertOne({
-            userId,
-            type: 'event-leave',
-            message: `${STORE.objUser.username} left ${title}.`,
-            createdDatetime: new Date().toISOString(),
-            read: false,
-        });
-
-        // Add push
-        // consider adding a helper function
+        // Notify the event owner that someone left their event
+        return pushNotification(STORE.connection, userId, 'left-event', `${STORE.objUser.username} left ${title}.`);
     })
     .then(() => {
         res.send({
@@ -297,7 +290,7 @@ router.post('/', function(req, res) {
 router.put('/:eventId', function(req, res) {
 
     const { eventId } = req.params;
-    const { sessionToken, title, location, details, startDatetime, endDatetime } = req.body;
+    const { sessionToken, title, location, details, startDatetime, endDatetime, guestList } = req.body;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -305,6 +298,7 @@ router.put('/:eventId', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
+        STORE.objUser = objUser;
         const userId = objUser.userId;
         return STORE.connection.collection(appConstants.EVENTS_TABLE).updateOne({ eventId }, { $set: {
             userId,
@@ -315,6 +309,14 @@ router.put('/:eventId', function(req, res) {
             endDatetime: new Date(endDatetime).toISOString(),
             dateUpdated: new Date().toISOString(),
         } })
+    })
+    .then(() => {
+        // Notify guest list of changes to the event.
+        const promiseNotifications = [];
+        for(let i = 0; i < guestList.length; i++){
+            promiseNotifications.push(pushNotification(STORE.connection, guestList[i], 'changed-event', `${STORE.objUser.username} made changes to event ${title}.`))
+        }
+        return Promise.all(promiseNotifications);
     })
     .then(() => {
         res.send({

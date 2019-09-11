@@ -64,6 +64,9 @@ router.get('/:sessionToken', function(req, res) {
                 profilePic,
                 userId,
                 alexaSessionTokenActive,
+                notifyFriendRequests,
+                notifyJoinLeaveEvents,
+                notifyEventChanges,
             } = arrProfiles[0];
 
             profile = {
@@ -72,6 +75,9 @@ router.get('/:sessionToken', function(req, res) {
                 profilePic,
                 userId,
                 alexaSessionTokenActive,
+                notifyFriendRequests,
+                notifyJoinLeaveEvents,
+                notifyEventChanges,
             }
         }
         res.send({
@@ -111,6 +117,9 @@ router.put('/:sessionToken', function(req, res) {
                 profilePic,
                 userId,
                 alexaSessionTokenActive,
+                notifyFriendRequests,
+                notifyJoinLeaveEvents,
+                notifyEventChanges,
             } = arrProfiles[0];
 
             profile = {
@@ -119,6 +128,9 @@ router.put('/:sessionToken', function(req, res) {
                 profilePic,
                 userId,
                 alexaSessionTokenActive,
+                notifyFriendRequests,
+                notifyJoinLeaveEvents,
+                notifyEventChanges,
             }
         }
         res.send({
@@ -180,6 +192,9 @@ router.get('/verification/:phoneNumber/:code', function(req, res) {
                     pushObject: {}, // the id for push notifications, this id rotates so we have a route to update it
                     alexaSessionToken: '', // We generate this before the user confirms, use with alexaSessionTokenActive flag
                     alexaSessionTokenActive: false,
+                    notifyFriendRequests: true,
+                    notifyJoinLeaveEvents: true,
+                    notifyEventChanges: true,
                 }
 
                 return STORE.connection.collection(appConstants.USERS_TABLE).insertOne(objUser);

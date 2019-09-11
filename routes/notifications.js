@@ -33,11 +33,14 @@ router.get('/:sessionToken', function(req, res) {
 // Mark as read
 router.put('/:sessionToken', function(req, res) {
     const { sessionToken } = req.params;
+    // const { notificationIds } = req.body;
     const STORE = {};
     dbConnect.then((connection) => {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
+    // just update all to be read... same effect as passing all unread ids
+    .then((objUser) => STORE.connection.collection(appConstants.NOTIFICATIONS_TABLE).updateMany({ userId: objUser.userId }, { $set: {read: true} }))
     .then(() => {
         res.send({
             success: true,
