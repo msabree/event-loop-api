@@ -244,6 +244,39 @@ router.post('/verification/:phoneNumber', function(req, res) {
     })
 });
 
+router.post('/search/:sessionToken', function(req, res) {
+
+    const { sessionToken } = req.params;
+    const { phoneNumbers, usernameQuery } = req.body;
+    const STORE = {};
+
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((userObj) => {
+        STORE.userObj = userObj;
+        const usernameRegex = new RegExp(usernameQuery, 'g');
+        return STORE.connection.collection(appConstants.USERS_TABLE).find({ $or: [{ username: usernameRegex }, { phoneNumber: {$in: phoneNumbers} }] }).toArray();
+    })
+    .then((matches) => {
+        res.send({
+            success: true,
+            message: '',
+            matches,
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            matches: [],
+            message: err.message || err
+        })  
+    })
+});
+
+// DEPRECATED!!!!
+// DELETE SOON!!!
 router.get('/search/:sessionToken/:query', function(req, res) {
 
     const { sessionToken, query } = req.params;
