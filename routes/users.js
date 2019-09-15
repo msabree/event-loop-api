@@ -260,10 +260,13 @@ router.post('/search/:sessionToken', function(req, res) {
         return STORE.connection.collection(appConstants.USERS_TABLE).find({ $or: [{ username: usernameRegex }, { phoneNumber: {$in: phoneNumbers} }] }).toArray();
     })
     .then((matches) => {
+        // don't send own account back in this response
+        // todo: filter any sensitive profile info
+        const matchesFiltered = matches.filter((match) => match.userId !== STORE.userObj.userId);
         res.send({
             success: true,
             message: '',
-            matches,
+            matches: matchesFiltered,
         })
     })
     .catch((err) => {
@@ -275,8 +278,8 @@ router.post('/search/:sessionToken', function(req, res) {
     })
 });
 
-// DEPRECATED!!!!
-// DELETE SOON!!!
+// Used to check if user can change their username to a desired query value
+// if taken they cannot use it
 router.get('/search/:sessionToken/:query', function(req, res) {
 
     const { sessionToken, query } = req.params;
@@ -288,7 +291,7 @@ router.get('/search/:sessionToken/:query', function(req, res) {
     })
     .then((userObj) => {
         STORE.userObj = userObj;
-        return STORE.connection.collection(appConstants.USERS_TABLE).find({ $or: [{ username: query }, { phoneNumber: query }] }).toArray();
+        return STORE.connection.collection(appConstants.USERS_TABLE).find({ username: query }).toArray();
     })
     .then((arrMatchedUsers) => {
         if(arrMatchedUsers.length > 1){
