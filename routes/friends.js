@@ -25,57 +25,64 @@ router.get('/:sessionToken', function(req, res) {
     })
     .then((arrFriends) => {
         STORE.arrFriends = arrFriends;
-        const arrFriendsUserIds = arrFriends.map((friend) => {
-            return friend.friendUserId;
-        })
-        return STORE.connection.collection(appConstants.USERS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
+        return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).find({requestorUserId: STORE.userObj.userId}).toArray();
     })
-    .then((arrFriendsProfiles) => {
-        STORE.arrFriendsProfiles = arrFriendsProfiles;
-        const arrRequestorUserIds = STORE.arrRequests.map((request) => {
-            return request.requestorUserId;
-        })
-        return STORE.connection.collection(appConstants.USERS_TABLE).find({userId: {$in: arrRequestorUserIds}}).toArray();
-    })
-    .then((arrRequestsProfiles) => {
-        const friendsMap = {};
-        for(let i = 0; i < STORE.arrFriendsProfiles.length; i++){
-            friendsMap[STORE.arrFriendsProfiles[i].userId] = {
-                profilePic: STORE.arrFriendsProfiles[i].profilePic,
-                username: STORE.arrFriendsProfiles[i].username,
-                phoneNumber: STORE.arrFriendsProfiles[i].phoneNumber,
-                displayName: STORE.arrFriendsProfiles[i].displayName,
-            }
+    .then((arrSentRequests) => {
+        STORE.arrSentRequests = arrSentRequests;
+        const userIds = [];
+        for(let i = 0; i < STORE.arrRequests.length; i++){
+            userIds.push(STORE.arrRequests[i].requestorUserId);
         }
 
-        const requestsMap = {};
-        for(let i = 0; i < arrRequestsProfiles.length; i++){
-            requestsMap[arrRequestsProfiles[i].userId] = {
-                profilePic: arrRequestsProfiles[i].profilePic,
-                username: arrRequestsProfiles[i].username,
-                phoneNumber: arrRequestsProfiles[i].phoneNumber,
-                displayName: arrRequestsProfiles[i].displayName,
+        for(let i = 0; i < STORE.arrFriends.length; i++){
+            userIds.push(STORE.arrFriends[i].friendUserId);
+        }
+
+        for(let i = 0; i < STORE.arrSentRequests.length; i++){
+            userIds.push(STORE.arrSentRequests[i].userId);
+        }
+
+        // todo: sent invites to app
+
+        return STORE.connection.collection(appConstants.USERS_TABLE).find({userId: {$in: userIds}}).toArray();
+    })
+    .then((arrProfiles) => {
+        const profileMap = {};
+        for(let i = 0; i < arrProfiles.length; i++){
+            profileMap[arrProfiles[i].userId] = {
+                profilePic: arrProfiles[i].profilePic,
+                username: arrProfiles[i].username,
+                phoneNumber: arrProfiles[i].phoneNumber,
+                displayName: arrProfiles[i].displayName,
             }
         }
 
         const friends = STORE.arrFriends.map((friend) => {
-            friend._profilePic = friendsMap[friend.friendUserId].profilePic;
-            friend._username = friendsMap[friend.friendUserId].username;
-            friend._displayName = friendsMap[friend.friendUserId].displayName;
+            friend._profilePic = profileMap[friend.friendUserId].profilePic;
+            friend._username = profileMap[friend.friendUserId].username;
+            friend._displayName = profileMap[friend.friendUserId].displayName;
             return friend;
         })
 
         const requests = STORE.arrRequests.map((request) => {
-            request._profilePic = requestsMap[request.requestorUserId].profilePic;
-            request._username = requestsMap[request.requestorUserId].username;
-            request._displayName = requestsMap[request.requestorUserId].displayName;
+            request._profilePic = profileMap[request.requestorUserId].profilePic;
+            request._username = profileMap[request.requestorUserId].username;
+            request._displayName = profileMap[request.requestorUserId].displayName;
             return request;
+        })
+
+        const sentRequests = STORE.arrSentRequests.map((sentRequest) => {
+            sentRequest._profilePic = profileMap[sentRequest.userId].profilePic;
+            sentRequest._username = profileMap[sentRequest.userId].username;
+            sentRequest._displayName = profileMap[sentRequest.userId].displayName;
+            return sentRequest;
         })
 
         res.send({
             success: true,
             requests,
             friends,
+            sentRequests,
         })
     })
     .catch((err) => {
