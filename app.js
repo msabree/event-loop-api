@@ -14,7 +14,6 @@ var friends = require('./routes/friends');
 var events = require('./routes/events');
 var alexa = require('./routes/alexa');
 var notifications = require('./routes/notifications');
-var comments = require('./routes/comments');
 
 var app = express();
 
@@ -36,7 +35,6 @@ app.use('/friends', friends);
 app.use('/events', events);
 app.use('/alexa', alexa);
 app.use('/notifications', notifications);
-app.use('/comments', comments);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
