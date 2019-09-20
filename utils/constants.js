@@ -7,4 +7,5 @@ module.exports = {
     APP_FEEDBACK_TABLE: 'app-feedback',
     ALEXA_SYNC_CODES_TABLE: 'alexa-sync-codes',
     NOTIFICATIONS_TABLE: 'notifications',
+    COMMENTS_TABLE: 'comments',
 };
