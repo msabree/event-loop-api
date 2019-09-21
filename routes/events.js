@@ -5,7 +5,8 @@ const uuidv4 = require('uuid/v4');
 const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
-const getFriendsProfiles = require('../utils/getFriendsProfiles');
+const getGeneralProfilesMap = require('../utils/getGeneralProfilesMap');
+const getFriendsProfilesMap = require('../utils/getFriendsProfilesMap');
 const pushNotification = require('../utils/pushNotification');
 
 // Events posted by users or by friends
@@ -21,7 +22,7 @@ router.get('/:sessionToken', function(req, res) {
     .then((objUser) => {
         STORE.objUser = objUser;
         const userId = objUser.userId;
-        return getFriendsProfiles(STORE.connection, userId);
+        return getFriendsProfilesMap(STORE.connection, userId);
     })
     .then((friendsProfileMap) => {
         STORE.friendsProfileMap = friendsProfileMap;
@@ -329,14 +330,18 @@ router.get('/comments/:eventId/:sessionToken', function(req, res) {
     })
     .then((comments) => {
         STORE.comments = comments;
-        return getFriendsProfiles(STORE.connection, STORE.userObj.userId);
+        const userIds = [];
+        for(let i = 0; i < STORE.comments.length; i++){
+            userIds.push(STORE.comments[i].userId);
+        }
+        return getGeneralProfilesMap(STORE.connection, userIds);
     })
-    .then((friendsProfileMap) => {
+    .then((profilesMap) => {
         const comments = STORE.comments.map((comment) => {
-            if(friendsProfileMap[comment.userId] !== undefined){
-                comment.profilePic = friendsProfileMap[comment.userId].profilePic;
-                comment.username = friendsProfileMap[comment.userId].username;
-                comment.displayName = friendsProfileMap[comment.userId].displayName;
+            if(profilesMap[comment.userId] !== undefined){
+                comment.profilePic = profilesMap[comment.userId].profilePic;
+                comment.username = profilesMap[comment.userId].username;
+                comment.displayName = profilesMap[comment.userId].displayName;
             }
             else if(comment.userId === STORE.userObj.userId){
                 comment.profilePic = STORE.userObj.profilePic;
