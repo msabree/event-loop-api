@@ -21,14 +21,7 @@ router.get('/sync-code/:sessionToken', function(req, res) {
         const alexaSessionToken = get(objUser, 'alexaSessionToken', '');
         const alexaSessionTokenActive = get(objUser, 'alexaSessionTokenActive', false);
 
-        if(alexaSessionTokenActive === true){
-            res.send({
-                success: false,
-                paired: false,
-                message: 'Alexa session already active. Only one connection is supported at a time currently.',
-            });
-        }
-        else if(alexaSessionToken === ''){
+        if(alexaSessionToken === '' && alexaSessionTokenActive === false){
             res.send({
                 success: true,
                 paired: false,
@@ -212,6 +205,7 @@ router.delete('/connection/:sessionToken', function(req, res) {
     })
     .catch((err) => {
         res.send({
+            success: false,
             message: 'Something went wrong. Please try again later.',
             err,
         });
