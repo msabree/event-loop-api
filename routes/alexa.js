@@ -21,7 +21,7 @@ router.get('/sync-code/:sessionToken', function(req, res) {
         const alexaSessionToken = get(objUser, 'alexaSessionToken', '');
         const alexaSessionTokenActive = get(objUser, 'alexaSessionTokenActive', false);
 
-        if(alexaSessionToken === '' || alexaSessionTokenActive === false){
+        if(alexaSessionToken === null && alexaSessionTokenActive === false){
             res.send({
                 success: true,
                 paired: false,
@@ -196,7 +196,7 @@ router.delete('/connection/:sessionToken', function(req, res) {
         });
     })
     .then(() => {
-        return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ userId: STORE.objUser.userId }, { $set: {alexaSessionToken: '', alexaSessionTokenActive: false} })
+        return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ userId: STORE.objUser.userId }, { $set: {alexaSessionToken: null, alexaSessionTokenActive: false} })
     })
     .then(() => {
         res.send({
