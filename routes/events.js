@@ -346,6 +346,7 @@ router.get('/comments/:eventId/:sessionToken', function(req, res) {
             else{
                 console.log('not friends??', comment)
             }
+            return comment;
         });
     
         STORE.comments = comments;
