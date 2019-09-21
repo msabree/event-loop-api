@@ -21,7 +21,7 @@ router.get('/sync-code/:sessionToken', function(req, res) {
         const alexaSessionToken = get(objUser, 'alexaSessionToken', '');
         const alexaSessionTokenActive = get(objUser, 'alexaSessionTokenActive', false);
 
-        if(alexaSessionToken === '' && alexaSessionTokenActive === false){
+        if(alexaSessionToken === '' || alexaSessionTokenActive === false){
             res.send({
                 success: true,
                 paired: false,
