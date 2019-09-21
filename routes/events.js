@@ -329,6 +329,17 @@ router.get('/comments/:eventId/:sessionToken', function(req, res) {
     })
     .then((comments) => {
         STORE.comments = comments;
+        return getFriendsProfiles(STORE.connection, STORE.userObj.userId);
+    })
+    .then((friendsProfileMap) => {
+        const comments = STORE.comments.map((comment) => {
+            comment.profilePic = friendsProfileMap[comment.userId].profilePic;
+            comment.username = friendsProfileMap[comment.userId].username;
+            comment.displayName = friendsProfileMap[comment.userId].displayName;
+        });
+    
+        STORE.comments = comments;
+
         // Update count for home page render
         return STORE.connection.collection(appConstants.EVENTS_TABLE).updateOne({ eventId }, { $set: {commentCount: comments.length} });
     })
