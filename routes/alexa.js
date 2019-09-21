@@ -167,9 +167,23 @@ router.delete('/sync-code/:sessionToken', function(req, res) {
 
 // Called from Alexa to see if session is still active?
 router.get('/connection/:sessionToken', function(req, res) {
-    res.send({
-        success: true,
-    });
+    const { sessionToken } = req.params;
+
+    const STORE = {};
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then(() => {
+        res.send({
+            success: true,
+        });
+    })
+    .catch(() => {
+        res.send({
+            success: false,
+        });
+    })
 });
 
 router.delete('/connection/:sessionToken', function(req, res) {
