@@ -333,9 +333,19 @@ router.get('/comments/:eventId/:sessionToken', function(req, res) {
     })
     .then((friendsProfileMap) => {
         const comments = STORE.comments.map((comment) => {
-            comment.profilePic = friendsProfileMap[comment.userId].profilePic;
-            comment.username = friendsProfileMap[comment.userId].username;
-            comment.displayName = friendsProfileMap[comment.userId].displayName;
+            if(friendsProfileMap[comment.userId] !== undefined){
+                comment.profilePic = friendsProfileMap[comment.userId].profilePic;
+                comment.username = friendsProfileMap[comment.userId].username;
+                comment.displayName = friendsProfileMap[comment.userId].displayName;
+            }
+            else if(comment.userId === STORE.userObj.userId){
+                comment.profilePic = STORE.userObj.profilePic;
+                comment.username = STORE.userObj.username;
+                comment.displayName = STORE.userObj.displayName;
+            }
+            else{
+                console.log('not friends??', comment)
+            }
         });
     
         STORE.comments = comments;
