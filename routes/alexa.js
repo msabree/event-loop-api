@@ -18,7 +18,7 @@ router.get('/sync-code/:sessionToken', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        const alexaSessionToken = get(objUser, 'alexaSessionToken', '');
+        const alexaSessionToken = get(objUser, 'alexaSessionToken', null);
         const alexaSessionTokenActive = get(objUser, 'alexaSessionTokenActive', false);
 
         if(alexaSessionToken === null && alexaSessionTokenActive === false){
