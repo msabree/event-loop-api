@@ -44,6 +44,8 @@ const uploadPhotoToS3 = (updateFields, sessionToken) => {
 router.get('/:sessionToken', function(req, res) {
 
     const { sessionToken } = req.params;
+    const appInstalledVersion = req.get('APP-INSTALLED-VERSION');
+    console.log(appInstalledVersion)
     const STORE = {};
 
     dbConnect.then((connection) => {

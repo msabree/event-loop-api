@@ -3,9 +3,11 @@ const uuidv4 = require('uuid/v4');
 const appConstants = require('./constants');
 const get = require('lodash/get');
 
+console.log(typeof process.env.SERVICE_ACCOUNT_JSON)
+
 // Push notifications configuration for Android
 admin.initializeApp({
-    credential: admin.credential.cert(process.env.SERVICE_ACCOUNT_JSON),
+    credential: admin.credential.cert(JSON.parse(process.env.SERVICE_ACCOUNT_JSON)),
     databaseURL: 'https://flaker-8a057.firebaseio.com',
 });
 
