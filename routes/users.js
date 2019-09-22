@@ -65,8 +65,8 @@ router.get('/:sessionToken', function(req, res) {
                 userId,
                 alexaSessionTokenActive,
                 notifyFriendRequests,
-                notifyJoinLeaveEvents,
-                notifyEventChanges,
+                notifyHostEventChanges,
+                notifyJoinedEventChanges,
             } = arrProfiles[0];
 
             profile = {
