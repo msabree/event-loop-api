@@ -78,6 +78,11 @@ router.delete('/:sessionToken/:eventId', function(req, res) {
         });
     })
     .then(() => {
+        return STORE.connection.collection(appConstants.COMMENTS_TABLE).deleteMany({
+            eventId,
+        });
+    })
+    .then(() => {
         return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).deleteMany({
             eventId,
         });
