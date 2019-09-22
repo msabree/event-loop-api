@@ -44,8 +44,7 @@ const uploadPhotoToS3 = (updateFields, sessionToken) => {
 router.get('/:sessionToken', function(req, res) {
 
     const { sessionToken } = req.params;
-    const appInstalledVersion = req.get('APP-INSTALLED-VERSION');
-    console.log(appInstalledVersion)
+    const currentAppVersion = req.get('APP-INSTALLED-VERSION');
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -53,6 +52,11 @@ router.get('/:sessionToken', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
+        STORE.objUser = objUser;
+        return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ sessionToken }, { $set: {currentAppVersion} })
+    })
+    .then(() => {
+        const objUser = STORE.objUser;
         const userId = objUser.userId;
         return STORE.connection.collection(appConstants.USERS_TABLE).find({ userId }).toArray();
     })
@@ -188,6 +192,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res) {
                     phoneNumber,
                     profilePic: 'https://flaker-images.s3.amazonaws.com/default-profile.png',
                     joined: new Date().toISOString(),
+                    currentAppVersion: '',
                     displayName: '', // optional
                     email: '', // optional
                     username: 'user_' + new Date().getTime(), // pregenerated, can be changed later

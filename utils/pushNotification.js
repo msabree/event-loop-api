@@ -23,7 +23,7 @@ module.exports = function(connection, userId, type, message){
         const STORE = {};
         connection.collection(appConstants.USERS_TABLE).find({userId}).toArray()
         .then((arrUsers) => {
-            if(arrUsers.length !== 0){
+            if(arrUsers.length !== 1){
                 throw new Error('single user not found')
             }
             else{
