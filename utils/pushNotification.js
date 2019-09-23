@@ -12,7 +12,11 @@ admin.initializeApp({
 
 // Push notifications configuration for iOS
 const options = {
-    token: JSON.parse(process.env.APN_TOKEN),
+    token: {
+        key: process.env.APN_PRIVATE_KEY,
+        keyId: '4F5DFZ32Q9',
+        teamId: '8F2ZLDNB8X',
+    },
     production: process.env.NODE_ENV === 'production',
 };
 
