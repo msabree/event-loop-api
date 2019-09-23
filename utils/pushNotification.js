@@ -17,8 +17,10 @@ const options = {
         keyId: '4F5DFZ32Q9',
         teamId: '8F2ZLDNB8X',
     },
-    production: true,
+    production: process.env.NODE_ENV === 'productiom',
 };
+
+console.log(options)
 
 const apnProvider = new apn.Provider(options);
 
@@ -99,6 +101,7 @@ module.exports = function(connection, userId, type, message){
                     resolve();
                 })
                 .catch((e) => {
+                    console.log(e)
                     throw new Error(e);
                 })
             }
