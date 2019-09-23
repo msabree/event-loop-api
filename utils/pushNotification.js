@@ -60,7 +60,7 @@ module.exports = function(connection, userId, type, message){
             console.log(notifyFriendRequests, notifyHostEventChanges, notifyJoinedEventChanges, type)
 
             if((notifyFriendRequests === false && type === 'friend-request') || 
-            (notifyHostEventChanges === false && (type === 'joined-event') || (type === 'left-event') || (type === 'commented-event')) ||
+            (notifyHostEventChanges === false && ((type === 'joined-event') || (type === 'left-event') || (type === 'commented-event'))) ||
             (notifyJoinedEventChanges === false && type === 'changed-event')){
                 resolve();
             }
