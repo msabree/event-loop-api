@@ -20,8 +20,6 @@ const options = {
     production: process.env.NODE_ENV === 'productiom',
 };
 
-console.log(options)
-
 const apnProvider = new apn.Provider(options);
 
 /**
@@ -59,54 +57,55 @@ module.exports = function(connection, userId, type, message){
             const notifyHostEventChanges = STORE.userObj.notifyHostEventChanges;
             const notifyJoinedEventChanges = STORE.userObj.notifyJoinedEventChanges;
 
+            console.log(notifyFriendRequests, notifyHostEventChanges, notifyJoinedEventChanges, type)
+
             if((notifyFriendRequests === false && type === 'friend-request') || 
             (notifyHostEventChanges === false && (type === 'join-event') || (type === 'left-event')) ||
             (notifyJoinedEventChanges === false && type === 'changed-event')){
                 resolve();
-                return;
-            }
-
-            const androidPush = {
-                notification: {
-                    title: 'Event Loop Notification',
-                    body: `${message}`,
-                },
-                data: {
-                    datetime: new Date().toISOString()
-                },
-            };
-
-            const iOSPush = new apn.Notification();
-            iOSPush.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
-            iOSPush.badge = 1;
-            iOSPush.sound = 'chime.caf';
-            iOSPush.alert = `${message}`;
-            iOSPush.topic = 'org.reactjs.native.example.flaker';
-            iOSPush.payload = {
-                datetime: new Date().toISOString()
-            };
-
-            if (get(STORE.userObj, 'pushObject.os', '').toLowerCase() === 'android') {
-                admin.messaging().sendToDevice(get(STORE.userObj, 'pushObject.token', ''), androidPush)
-                .then(() => {
-                    resolve();
-                })
-                .catch((e) => {
-                    throw new Error(e);
-                })
             }
             else{
-                apnProvider.send(iOSPush, get(STORE.userObj, 'pushObject.token', ''))
-                .then(() => {
-                    resolve();
-                })
-                .catch((e) => {
-                    console.log(e)
-                    throw new Error(e);
-                })
+                const androidPush = {
+                    notification: {
+                        title: 'Event Loop Notification',
+                        body: `${message}`,
+                    },
+                    data: {
+                        datetime: new Date().toISOString()
+                    },
+                };
+    
+                const iOSPush = new apn.Notification();
+                iOSPush.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
+                iOSPush.badge = 1;
+                iOSPush.sound = 'chime.caf';
+                iOSPush.alert = `${message}`;
+                iOSPush.topic = 'org.reactjs.native.example.flaker';
+                iOSPush.payload = {
+                    datetime: new Date().toISOString()
+                };
+    
+                if (get(STORE.userObj, 'pushObject.os', '').toLowerCase() === 'android') {
+                    admin.messaging().sendToDevice(get(STORE.userObj, 'pushObject.token', ''), androidPush)
+                    .then(() => {
+                        resolve();
+                    })
+                    .catch((e) => {
+                        throw new Error(e);
+                    })
+                }
+                else{
+                    apnProvider.send(iOSPush, get(STORE.userObj, 'pushObject.token', ''))
+                    .then(() => {
+                        resolve();
+                    })
+                    .catch((e) => {
+                        throw new Error(e);
+                    })
+                }
+    
+                resolve();
             }
-
-            resolve();
         })
         .catch((err) => {
             // "Okay" if this fails... Let's not fail the request.
