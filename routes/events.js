@@ -386,14 +386,17 @@ router.post('/comments/:sessionToken', function(req, res) {
         STORE.connection = connection;
         return getSession(sessionToken, connection);
     })
-    .then((objUser) => STORE.connection.collection(appConstants.COMMENTS_TABLE).insertOne({
-        commentId: uuidv4(),
-        eventId,
-        comment,
-        userId: objUser.userId,
-        isCreator,
-        datetimePosted: new Date().toISOString(),
-    }))
+    .then((objUser) => {
+        STORE.objUser = objUser;
+        return STORE.connection.collection(appConstants.COMMENTS_TABLE).insertOne({
+            commentId: uuidv4(),
+            eventId,
+            comment,
+            userId: objUser.userId,
+            isCreator,
+            datetimePosted: new Date().toISOString(),
+        })
+    })
     .then(() => {
         // let event owner know there is a new comment
         // to do: decide if we should notify all previous commenters?? all guest list?
