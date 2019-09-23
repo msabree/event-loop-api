@@ -25,7 +25,7 @@ const apnProvider = new apn.Provider(options);
 /**
  * Helper to send push notifications and update notifications collection.
  * @param {String} userId - The user who should receive the push notification.
- * @param {String} type - friend-request|join-event|left-event|changed-event|event-comment
+ * @param {String} type - friend-request|join-event|left-event|changed-event|commented-event
  * @param {Object} connection - Open connection to the data store.
  * @param {Object} message - The notification message to send.
 */
@@ -60,7 +60,7 @@ module.exports = function(connection, userId, type, message){
             console.log(notifyFriendRequests, notifyHostEventChanges, notifyJoinedEventChanges, type)
 
             if((notifyFriendRequests === false && type === 'friend-request') || 
-            (notifyHostEventChanges === false && (type === 'join-event') || (type === 'left-event')) ||
+            (notifyHostEventChanges === false && (type === 'joined-event') || (type === 'left-event') || (type === 'commented-event')) ||
             (notifyJoinedEventChanges === false && type === 'changed-event')){
                 resolve();
             }

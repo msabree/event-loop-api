@@ -408,7 +408,7 @@ router.post('/comments/:sessionToken', function(req, res) {
         // Get the event host
         STORE.connection.collection(appConstants.EVENTS_TABLE).find({eventId}).toArray()
         .then((arrEvents) => {
-            return pushNotification(STORE.connection, arrEvents[0].userId, 'changed-event', `${STORE.objUser.username} commented on event ${arrEvents[0].title}.`)
+            return pushNotification(STORE.connection, arrEvents[0].userId, 'commented-event', `${STORE.objUser.username} commented on event ${arrEvents[0].title}.`)
         })
         .catch((e) => {
             console.log(e);
