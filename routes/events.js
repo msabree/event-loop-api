@@ -395,6 +395,24 @@ router.post('/comments/:sessionToken', function(req, res) {
         datetimePosted: new Date().toISOString(),
     }))
     .then(() => {
+        // let event owner know there is a new comment
+        // to do: decide if we should notify all previous commenters?? all guest list?
+        if(isCreator === true){
+            // if it's user's own event dont notify anyone... yet
+            return Promise.resolve();
+        }
+
+        // Get the event host
+        STORE.connection.collection(appConstants.EVENTS_TABLE).find({eventId}).toArray()
+        .then((arrEvents) => {
+            return pushNotification(STORE.connection, arrEvents[0].userId, 'changed-event', `${STORE.objUser.username} commented on event ${arrEvents[0].title}.`)
+        })
+        .catch((e) => {
+            console.log(e);
+            return Promise.resolve();
+        })
+    })
+    .then(() => {
         res.send({
             success: true,
         })

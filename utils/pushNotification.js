@@ -1,9 +1,8 @@
 const admin = require('firebase-admin');
+const apn = require('apn');
 const uuidv4 = require('uuid/v4');
 const appConstants = require('./constants');
 const get = require('lodash/get');
-
-console.log(typeof process.env.SERVICE_ACCOUNT_JSON)
 
 // Push notifications configuration for Android
 admin.initializeApp({
@@ -11,10 +10,18 @@ admin.initializeApp({
     databaseURL: 'https://flaker-8a057.firebaseio.com',
 });
 
+// Push notifications configuration for iOS
+const options = {
+    token: JSON.parse(process.env.APN_TOKEN),
+    production: process.env.NODE_ENV === 'production',
+};
+
+const apnProvider = new apn.Provider(options);
+
 /**
  * Helper to send push notifications and update notifications collection.
  * @param {String} userId - The user who should receive the push notification.
- * @param {String} type - friend-request|join-event|left-event|changed-event|new-event(TO DO)
+ * @param {String} type - friend-request|join-event|left-event|changed-event|event-comment
  * @param {Object} connection - Open connection to the data store.
  * @param {Object} message - The notification message to send.
 */
@@ -40,6 +47,19 @@ module.exports = function(connection, userId, type, message){
             })
         })
         .then(() => {
+
+            // CHECK NOTIFICATION LEVEL TOGGLES
+            const notifyFriendRequests = STORE.userObj.notifyFriendRequests;
+            const notifyHostEventChanges = STORE.userObj.notifyHostEventChanges;
+            const notifyJoinedEventChanges = STORE.userObj.notifyJoinedEventChanges;
+
+            if((notifyFriendRequests === false && type === 'friend-request') || 
+            (notifyHostEventChanges === false && (type === 'join-event') || (type === 'left-event')) ||
+            (notifyJoinedEventChanges === false && type === 'changed-event')){
+                resolve();
+                return;
+            }
+
             const androidPush = {
                 notification: {
                     title: 'Event Loop Notification',
@@ -48,6 +68,16 @@ module.exports = function(connection, userId, type, message){
                 data: {
                     datetime: new Date().toISOString()
                 },
+            };
+
+            const iOSPush = new apn.Notification();
+            iOSPush.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
+            iOSPush.badge = 1;
+            iOSPush.sound = 'chime.caf';
+            iOSPush.alert = `${message}`;
+            iOSPush.topic = 'org.reactjs.native.example.flaker';
+            iOSPush.payload = {
+                datetime: new Date().toISOString()
             };
 
             if (get(STORE.userObj, 'pushObject.os', '').toLowerCase() === 'android') {
@@ -59,8 +89,15 @@ module.exports = function(connection, userId, type, message){
                     throw new Error(e);
                 })
             }
-
-            console.log(androidPush)
+            else{
+                apnProvider.send(iOSPush, get(STORE.userObj, 'pushObject.token', ''))
+                .then(() => {
+                    resolve();
+                })
+                .catch((e) => {
+                    throw new Error(e);
+                })
+            }
 
             resolve();
         })
