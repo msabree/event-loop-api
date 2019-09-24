@@ -5,7 +5,8 @@ const uuidv4 = require('uuid/v4');
 const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
 const getSession = require('../utils/getSession');
-const getFriendsProfiles = require('../utils/getFriendsProfiles');
+const getGeneralProfilesMap = require('../utils/getGeneralProfilesMap');
+const getFriendsProfilesMap = require('../utils/getFriendsProfilesMap');
 const pushNotification = require('../utils/pushNotification');
 
 // Events posted by users or by friends
@@ -21,7 +22,7 @@ router.get('/:sessionToken', function(req, res) {
     .then((objUser) => {
         STORE.objUser = objUser;
         const userId = objUser.userId;
-        return getFriendsProfiles(STORE.connection, userId);
+        return getFriendsProfilesMap(STORE.connection, userId);
     })
     .then((friendsProfileMap) => {
         STORE.friendsProfileMap = friendsProfileMap;
@@ -31,31 +32,8 @@ router.get('/:sessionToken', function(req, res) {
         return STORE.connection.collection(appConstants.EVENTS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
     })
     .then((arrEvents) => {
-        STORE.arrEvents = arrEvents;
-
-        // Get all guest lists per event
-        const arrEventIds = arrEvents.map((event) => {
-            return event.eventId;
-        })
-
-        return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).find({eventId: {$in: arrEventIds}}).toArray();
-    })
-    .then((arrEventsGuestList) => {
-
-        const eventGuestListMap = {};
-        for(let i = 0; i < arrEventsGuestList.length; i++){
-            let arrGuestList = eventGuestListMap[arrEventsGuestList[i].eventId];
-            if(arrGuestList === undefined){
-                arrGuestList = [arrEventsGuestList[i].userId];
-            }
-            else{
-                arrGuestList.push(arrEventsGuestList[i].userId);
-            }
-            eventGuestListMap[arrEventsGuestList[i].eventId] = arrGuestList;
-        }
-
         // Do something with outdated events
-        const formattedEvents = STORE.arrEvents.map((event) => {
+        const formattedEvents = arrEvents.map((event) => {
             if(event.userId === STORE.objUser.userId){
                 // current user created the event
                 event.associatedUserProfile = STORE.objUser;
@@ -64,7 +42,6 @@ router.get('/:sessionToken', function(req, res) {
                 event.associatedUserProfile = STORE.friendsProfileMap[event.userId];
             }
 
-            event.guestList = eventGuestListMap[event.eventId];
             return event;
         })
         res.send({
@@ -98,6 +75,11 @@ router.delete('/:sessionToken/:eventId', function(req, res) {
         return STORE.connection.collection(appConstants.EVENTS_TABLE).deleteOne({
             eventId,
             userId,
+        });
+    })
+    .then(() => {
+        return STORE.connection.collection(appConstants.COMMENTS_TABLE).deleteMany({
+            eventId,
         });
     })
     .then(() => {
@@ -149,6 +131,12 @@ router.get('/guest-list/:eventId/:sessionToken', function(req, res) {
         return STORE.connection.collection(appConstants.USERS_TABLE).find({userId: {$in: guestListUserIds}}).toArray();
     })
     .then((arrProfiles) => {
+        STORE.arrProfiles = arrProfiles;
+        // Update count for home page render
+        return STORE.connection.collection(appConstants.EVENTS_TABLE).updateOne({ eventId }, { $set: {guestListCount: STORE.guestList.length} });
+    })
+    .then(() => {
+        const arrProfiles = STORE.arrProfiles;
         const profileMap = {};
         for(let i = 0; i < arrProfiles.length; i++){
             // DELETE ANY INFO FROM PROFILE THAT SHOULD NOT GET RETURNED TO CLIENT
@@ -268,6 +256,8 @@ router.post('/', function(req, res) {
             title, 
             location,
             details,
+            commentCount: 0, // static for faster intial load
+            guestListCount: 0, // static for faster intial load
             startDatetime: new Date(startDatetime).toISOString(),
             endDatetime: new Date(endDatetime).toISOString(),
             dateCreated: new Date().toISOString(),
@@ -322,6 +312,112 @@ router.put('/:eventId', function(req, res) {
         res.send({
             success: true,
             message: ''
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
+router.get('/comments/:eventId/:sessionToken', function(req, res) {
+    const { sessionToken, eventId } = req.params;
+    const STORE = {};
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((userObj) => {
+        STORE.userObj = userObj;
+        return STORE.connection.collection(appConstants.COMMENTS_TABLE).find({eventId}).toArray();
+    })
+    .then((comments) => {
+        STORE.comments = comments;
+        const userIds = [];
+        for(let i = 0; i < STORE.comments.length; i++){
+            userIds.push(STORE.comments[i].userId);
+        }
+        return getGeneralProfilesMap(STORE.connection, userIds);
+    })
+    .then((profilesMap) => {
+        const comments = STORE.comments.map((comment) => {
+            if(profilesMap[comment.userId] !== undefined){
+                comment.profilePic = profilesMap[comment.userId].profilePic;
+                comment.username = profilesMap[comment.userId].username;
+                comment.displayName = profilesMap[comment.userId].displayName;
+            }
+            else if(comment.userId === STORE.userObj.userId){
+                comment.profilePic = STORE.userObj.profilePic;
+                comment.username = STORE.userObj.username;
+                comment.displayName = STORE.userObj.displayName;
+            }
+            else{
+                console.log('not friends??', comment)
+            }
+            return comment;
+        });
+    
+        STORE.comments = comments;
+
+        // Update count for home page render
+        return STORE.connection.collection(appConstants.EVENTS_TABLE).updateOne({ eventId }, { $set: {commentCount: comments.length} });
+    })
+    .then(() => {
+        res.send({
+            success: true,
+            comments: STORE.comments,
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
+router.post('/comments/:sessionToken', function(req, res) {
+    const { sessionToken } = req.params;
+    const { eventId, comment, isCreator } = req.body;
+    const STORE = {};
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((objUser) => {
+        STORE.objUser = objUser;
+        return STORE.connection.collection(appConstants.COMMENTS_TABLE).insertOne({
+            commentId: uuidv4(),
+            eventId,
+            comment,
+            userId: objUser.userId,
+            isCreator,
+            datetimePosted: new Date().toISOString(),
+        })
+    })
+    .then(() => {
+        // let event owner know there is a new comment
+        // to do: decide if we should notify all previous commenters?? all guest list?
+        if(isCreator === true){
+            // if it's user's own event dont notify anyone... yet
+            return Promise.resolve();
+        }
+
+        // Get the event host
+        STORE.connection.collection(appConstants.EVENTS_TABLE).find({eventId}).toArray()
+        .then((arrEvents) => {
+            return pushNotification(STORE.connection, arrEvents[0].userId, 'commented-event', `${STORE.objUser.username} commented on event ${arrEvents[0].title}.`)
+        })
+        .catch((e) => {
+            console.log(e);
+            return Promise.resolve();
+        })
+    })
+    .then(() => {
+        res.send({
+            success: true,
         })
     })
     .catch((err) => {

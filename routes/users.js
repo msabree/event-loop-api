@@ -44,6 +44,7 @@ const uploadPhotoToS3 = (updateFields, sessionToken) => {
 router.get('/:sessionToken', function(req, res) {
 
     const { sessionToken } = req.params;
+    const currentAppVersion = req.get('APP-INSTALLED-VERSION');
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -51,6 +52,11 @@ router.get('/:sessionToken', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
+        STORE.objUser = objUser;
+        return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ sessionToken }, { $set: {currentAppVersion} })
+    })
+    .then(() => {
+        const objUser = STORE.objUser;
         const userId = objUser.userId;
         return STORE.connection.collection(appConstants.USERS_TABLE).find({ userId }).toArray();
     })
@@ -65,8 +71,8 @@ router.get('/:sessionToken', function(req, res) {
                 userId,
                 alexaSessionTokenActive,
                 notifyFriendRequests,
-                notifyJoinLeaveEvents,
-                notifyEventChanges,
+                notifyHostEventChanges,
+                notifyJoinedEventChanges,
             } = arrProfiles[0];
 
             profile = {
@@ -76,8 +82,8 @@ router.get('/:sessionToken', function(req, res) {
                 userId,
                 alexaSessionTokenActive,
                 notifyFriendRequests,
-                notifyJoinLeaveEvents,
-                notifyEventChanges,
+                notifyHostEventChanges,
+                notifyJoinedEventChanges,
             }
         }
         res.send({
@@ -118,8 +124,8 @@ router.put('/:sessionToken', function(req, res) {
                 userId,
                 alexaSessionTokenActive,
                 notifyFriendRequests,
-                notifyJoinLeaveEvents,
-                notifyEventChanges,
+                notifyHostEventChanges,
+                notifyJoinedEventChanges,
             } = arrProfiles[0];
 
             profile = {
@@ -129,8 +135,8 @@ router.put('/:sessionToken', function(req, res) {
                 userId,
                 alexaSessionTokenActive,
                 notifyFriendRequests,
-                notifyJoinLeaveEvents,
-                notifyEventChanges,
+                notifyHostEventChanges,
+                notifyJoinedEventChanges,
             }
         }
         res.send({
@@ -186,15 +192,16 @@ router.get('/verification/:phoneNumber/:code', function(req, res) {
                     phoneNumber,
                     profilePic: 'https://flaker-images.s3.amazonaws.com/default-profile.png',
                     joined: new Date().toISOString(),
+                    currentAppVersion: '',
                     displayName: '', // optional
                     email: '', // optional
                     username: 'user_' + new Date().getTime(), // pregenerated, can be changed later
-                    pushObject: {}, // the id for push notifications, this id rotates so we have a route to update it
+                    pushObject: {}, // the info for push notifications, this token object can change so we use PUT request to update it
                     alexaSessionToken: '', // We generate this before the user confirms, use with alexaSessionTokenActive flag
                     alexaSessionTokenActive: false,
                     notifyFriendRequests: true,
-                    notifyJoinLeaveEvents: true,
-                    notifyEventChanges: true,
+                    notifyHostEventChanges: true,
+                    notifyJoinedEventChanges: true,
                 }
 
                 return STORE.connection.collection(appConstants.USERS_TABLE).insertOne(objUser);

@@ -18,17 +18,10 @@ router.get('/sync-code/:sessionToken', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
-        const alexaSessionToken = get(objUser, 'alexaSessionToken', '');
+        const alexaSessionToken = get(objUser, 'alexaSessionToken', null);
         const alexaSessionTokenActive = get(objUser, 'alexaSessionTokenActive', false);
 
-        if(alexaSessionTokenActive === true){
-            res.send({
-                success: false,
-                paired: false,
-                message: 'Alexa session already active. Only one connection is supported at a time currently.',
-            });
-        }
-        else if(alexaSessionToken === ''){
+        if(alexaSessionToken === null && alexaSessionTokenActive === false){
             res.send({
                 success: true,
                 paired: false,
@@ -167,9 +160,23 @@ router.delete('/sync-code/:sessionToken', function(req, res) {
 
 // Called from Alexa to see if session is still active?
 router.get('/connection/:sessionToken', function(req, res) {
-    res.send({
-        success: true,
-    });
+    const { sessionToken } = req.params;
+
+    const STORE = {};
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then(() => {
+        res.send({
+            success: true,
+        });
+    })
+    .catch(() => {
+        res.send({
+            success: false,
+        });
+    })
 });
 
 router.delete('/connection/:sessionToken', function(req, res) {
@@ -189,7 +196,7 @@ router.delete('/connection/:sessionToken', function(req, res) {
         });
     })
     .then(() => {
-        return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ userId: STORE.objUser.userId }, { $set: {alexaSessionToken: '', alexaSessionTokenActive: false} })
+        return STORE.connection.collection(appConstants.USERS_TABLE).updateOne({ userId: STORE.objUser.userId }, { $set: {alexaSessionToken: null, alexaSessionTokenActive: false} })
     })
     .then(() => {
         res.send({
@@ -198,6 +205,7 @@ router.delete('/connection/:sessionToken', function(req, res) {
     })
     .catch((err) => {
         res.send({
+            success: false,
             message: 'Something went wrong. Please try again later.',
             err,
         });
