@@ -17,7 +17,7 @@ const options = {
         keyId: '4F5DFZ32Q9',
         teamId: '8F2ZLDNB8X',
     },
-    production: process.env.NODE_ENV === 'productiom',
+    production: process.env.NODE_ENV === 'production',
 };
 
 const apnProvider = new apn.Provider(options);
