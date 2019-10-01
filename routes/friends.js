@@ -110,7 +110,9 @@ router.post('/request', function(req, res) {
         const foundIndex = findIndex(arrFriends, (friend) => {return friend.friendUserId === friendUserId});
         if(foundIndex === -1){
             // not a friend yet... check for pending requests...
-            return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).find({requestorUserId: STORE.userObj.userId}).toArray();
+            // also, check if the other user already sent this user a request
+            // if a each user sends a friend request and both accept we'd have an edge case were a friend is listed twice
+            return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).find({ $or: [{requestorUserId: STORE.userObj.userId}, {userId: STORE.userObj.userId}] }).toArray();
         }
         else{
             throw new Error('friends');
@@ -118,7 +120,8 @@ router.post('/request', function(req, res) {
     })
     .then((arrRequests) => {
         const foundIndex = findIndex(arrRequests, (request) => {
-            return request.requestorUserId === STORE.userObj.userId && request.userId === friendUserId;
+            return (request.requestorUserId === STORE.userObj.userId && request.userId === friendUserId || 
+                request.userId === STORE.userObj.userId && request.requestorUserId === friendUserId);
         });
         if(foundIndex === -1){
             const requestId = uuidv4();
