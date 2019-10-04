@@ -241,7 +241,7 @@ router.delete('/guest-list', function(req, res) {
 
 router.post('/', function(req, res) {
 
-    const { sessionToken, title, location, details, startDatetime, endDatetime } = req.body;
+    const { sessionToken, title, location, details, startDatetime, endDatetime, phoneNumber, passCode, meetingLink, eventType } = req.body;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -261,6 +261,10 @@ router.post('/', function(req, res) {
             startDatetime: new Date(startDatetime).toISOString(),
             endDatetime: new Date(endDatetime).toISOString(),
             dateCreated: new Date().toISOString(),
+            phoneNumber,
+            passCode,
+            meetingLink,
+            eventType,
         });
     })
     .then(() => {
@@ -280,7 +284,7 @@ router.post('/', function(req, res) {
 router.put('/:eventId', function(req, res) {
 
     const { eventId } = req.params;
-    const { sessionToken, title, location, details, startDatetime, endDatetime, guestList } = req.body;
+    const { sessionToken, title, location, details, startDatetime, endDatetime, phoneNumber, passCode, meetingLink, eventType, guestList } = req.body;
     const STORE = {};
 
     dbConnect.then((connection) => {
@@ -297,6 +301,10 @@ router.put('/:eventId', function(req, res) {
             details,
             startDatetime: new Date(startDatetime).toISOString(),
             endDatetime: new Date(endDatetime).toISOString(),
+            phoneNumber,
+            passCode,
+            meetingLink,
+            eventType,
             dateUpdated: new Date().toISOString(),
         } })
     })
@@ -413,6 +421,32 @@ router.post('/comments/:sessionToken', function(req, res) {
         .catch((e) => {
             console.log(e);
             return Promise.resolve();
+        })
+    })
+    .then(() => {
+        res.send({
+            success: true,
+        })
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
+router.delete('/comments/:commentId/:sessionToken', function(req, res) {
+    const { sessionToken, commentId } = req.params;
+    const STORE = {};
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((objUser) => {
+        return STORE.connection.collection(appConstants.COMMENTS_TABLE).deleteOne({
+            commentId,
+            userId: objUser.userId,
         })
     })
     .then(() => {
