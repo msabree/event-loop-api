@@ -53,13 +53,15 @@ module.exports = function(connection, userId, type, message){
         .then(() => {
 
             // CHECK NOTIFICATION LEVEL TOGGLES
+            const notifyNewEvents = STORE.userObj.notifyNewEvents;
             const notifyFriendRequests = STORE.userObj.notifyFriendRequests;
             const notifyHostEventChanges = STORE.userObj.notifyHostEventChanges;
             const notifyJoinedEventChanges = STORE.userObj.notifyJoinedEventChanges;
 
-            console.log(notifyFriendRequests, notifyHostEventChanges, notifyJoinedEventChanges, type)
+            console.log(notifyFriendRequests, notifyHostEventChanges, notifyJoinedEventChanges, notifyNewEvents, type)
 
-            if((notifyFriendRequests === false && type === 'friend-request') || 
+            if((notifyNewEvents === false && type === 'new-event') || 
+            (notifyFriendRequests === false && type === 'friend-request') || 
             (notifyHostEventChanges === false && ((type === 'joined-event') || (type === 'left-event') || (type === 'commented-event'))) ||
             (notifyJoinedEventChanges === false && type === 'changed-event')){
                 resolve();
