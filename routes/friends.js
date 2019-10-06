@@ -93,6 +93,33 @@ router.get('/:sessionToken', function(req, res) {
     })
 });
 
+router.put('/:sessionToken', function(req, res) {
+    
+    const { sessionToken } = req.params;
+    const { starred = true, friendUserId } = req.body;
+    const STORE = {};
+    
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((userObj) => {
+        return STORE.connection.collection(appConstants.FRIENDS_TABLE).updateOne({ userId: userObj.userId, friendUserId }, { $set: {starred} })
+    })
+    .then(() => {
+        res.send({
+            success: true,
+            message: '',
+        })        
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
 router.post('/request', function(req, res) {
 
     const { sessionToken, friendUserId } = req.body;
@@ -183,11 +210,13 @@ router.post('/request-response', function(req, res) {
                     {
                         userId: STORE.userObj.userId,
                         friendUserId: STORE.request.requestorUserId,
+                        starred: false,
                         dateAdded: new Date().toISOString(),
                     },
                     {
                         userId: STORE.request.requestorUserId,
                         friendUserId: STORE.userObj.userId,
+                        starred: false,
                         dateAdded: new Date().toISOString(),
                     }
                 ]
