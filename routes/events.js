@@ -249,6 +249,7 @@ router.post('/', function(req, res) {
         return getSession(sessionToken, connection);
     })
     .then((objUser) => {
+        STORE.objUser = objUser;
         const userId = objUser.userId;
         return STORE.connection.collection(appConstants.EVENTS_TABLE).insertOne({
             eventId: uuidv4(),
@@ -266,6 +267,17 @@ router.post('/', function(req, res) {
             meetingLink,
             eventType,
         });
+    })
+    .then(() => {
+        // Notify anyone who starred this user that they posted a new event
+        return STORE.connection.collection(appConstants.FRIENDS_TABLE).find({friendUserId: STORE.objUser.userId, starred: true}).toArray();
+    })
+    .then((arrUsersWhoStarredMe) => {
+        const promiseNotifications = [];
+        for(let i = 0; i < arrUsersWhoStarredMe.length; i++){
+            promiseNotifications.push(pushNotification(STORE.connection, arrUsersWhoStarredMe[i].userId, 'new-event', `${STORE.objUser.username} posted a new event: ${title}.`))
+        }
+        return Promise.all(promiseNotifications);
     })
     .then(() => {
         res.send({

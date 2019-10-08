@@ -25,7 +25,7 @@ const apnProvider = new apn.Provider(options);
 /**
  * Helper to send push notifications and update notifications collection.
  * @param {String} userId - The user who should receive the push notification.
- * @param {String} type - friend-request|join-event|left-event|changed-event|commented-event
+ * @param {String} type - friend-request|join-event|left-event|changed-event|commented-event|new-event
  * @param {Object} connection - Open connection to the data store.
  * @param {Object} message - The notification message to send.
 */
