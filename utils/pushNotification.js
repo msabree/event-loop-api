@@ -25,7 +25,7 @@ const apnProvider = new apn.Provider(options);
 /**
  * Helper to send push notifications and update notifications collection.
  * @param {String} userId - The user who should receive the push notification.
- * @param {String} type - friend-request|join-event|left-event|changed-event|commented-event
+ * @param {String} type - friend-request|join-event|left-event|changed-event|commented-event|new-event
  * @param {Object} connection - Open connection to the data store.
  * @param {Object} message - The notification message to send.
 */
@@ -53,13 +53,15 @@ module.exports = function(connection, userId, type, message){
         .then(() => {
 
             // CHECK NOTIFICATION LEVEL TOGGLES
+            const notifyNewEvents = STORE.userObj.notifyNewEvents;
             const notifyFriendRequests = STORE.userObj.notifyFriendRequests;
             const notifyHostEventChanges = STORE.userObj.notifyHostEventChanges;
             const notifyJoinedEventChanges = STORE.userObj.notifyJoinedEventChanges;
 
-            console.log(notifyFriendRequests, notifyHostEventChanges, notifyJoinedEventChanges, type)
+            console.log(notifyFriendRequests, notifyHostEventChanges, notifyJoinedEventChanges, notifyNewEvents, type)
 
-            if((notifyFriendRequests === false && type === 'friend-request') || 
+            if((notifyNewEvents === false && type === 'new-event') || 
+            (notifyFriendRequests === false && type === 'friend-request') || 
             (notifyHostEventChanges === false && ((type === 'joined-event') || (type === 'left-event') || (type === 'commented-event'))) ||
             (notifyJoinedEventChanges === false && type === 'changed-event')){
                 resolve();

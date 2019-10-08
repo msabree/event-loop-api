@@ -93,6 +93,33 @@ router.get('/:sessionToken', function(req, res) {
     })
 });
 
+router.put('/:sessionToken', function(req, res) {
+    
+    const { sessionToken } = req.params;
+    const { starred = true, friendUserId } = req.body;
+    const STORE = {};
+    
+    dbConnect.then((connection) => {
+        STORE.connection = connection;
+        return getSession(sessionToken, connection);
+    })
+    .then((userObj) => {
+        return STORE.connection.collection(appConstants.FRIENDS_TABLE).updateOne({ userId: userObj.userId, friendUserId }, { $set: {starred} })
+    })
+    .then(() => {
+        res.send({
+            success: true,
+            message: '',
+        })        
+    })
+    .catch((err) => {
+        res.send({
+            success: false,
+            message: err.message || err
+        })  
+    })
+});
+
 router.post('/request', function(req, res) {
 
     const { sessionToken, friendUserId } = req.body;
@@ -110,7 +137,9 @@ router.post('/request', function(req, res) {
         const foundIndex = findIndex(arrFriends, (friend) => {return friend.friendUserId === friendUserId});
         if(foundIndex === -1){
             // not a friend yet... check for pending requests...
-            return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).find({requestorUserId: STORE.userObj.userId}).toArray();
+            // also, check if the other user already sent this user a request
+            // if a each user sends a friend request and both accept we'd have an edge case were a friend is listed twice
+            return STORE.connection.collection(appConstants.FRIENDS_REQUESTS_TABLE).find({ $or: [{requestorUserId: STORE.userObj.userId}, {userId: STORE.userObj.userId}] }).toArray();
         }
         else{
             throw new Error('friends');
@@ -118,7 +147,8 @@ router.post('/request', function(req, res) {
     })
     .then((arrRequests) => {
         const foundIndex = findIndex(arrRequests, (request) => {
-            return request.requestorUserId === STORE.userObj.userId && request.userId === friendUserId;
+            return (request.requestorUserId === STORE.userObj.userId && request.userId === friendUserId || 
+                request.userId === STORE.userObj.userId && request.requestorUserId === friendUserId);
         });
         if(foundIndex === -1){
             const requestId = uuidv4();
@@ -180,11 +210,13 @@ router.post('/request-response', function(req, res) {
                     {
                         userId: STORE.userObj.userId,
                         friendUserId: STORE.request.requestorUserId,
+                        starred: false,
                         dateAdded: new Date().toISOString(),
                     },
                     {
                         userId: STORE.request.requestorUserId,
                         friendUserId: STORE.userObj.userId,
+                        starred: false,
                         dateAdded: new Date().toISOString(),
                     }
                 ]
