@@ -6,6 +6,7 @@ const get = require('lodash/get');
 
 // Push notifications configuration for Android
 admin.initializeApp({
+    // eslint-disable-next-line no-undef
     credential: admin.credential.cert(JSON.parse(process.env.SERVICE_ACCOUNT_JSON)),
     databaseURL: 'https://flaker-8a057.firebaseio.com',
 });
@@ -13,10 +14,12 @@ admin.initializeApp({
 // Push notifications configuration for iOS
 const options = {
     token: {
+        // eslint-disable-next-line no-undef
         key: process.env.APN_PRIVATE_KEY,
         keyId: '4F5DFZ32Q9',
         teamId: '8F2ZLDNB8X',
     },
+    // eslint-disable-next-line no-undef
     production: process.env.NODE_ENV === 'production',
 };
 
