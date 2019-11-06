@@ -8,4 +8,5 @@ module.exports = {
     ALEXA_SYNC_CODES_TABLE: 'alexa-sync-codes',
     NOTIFICATIONS_TABLE: 'notifications',
     COMMENTS_TABLE: 'comments',
+    GROUPS_TABLE: 'groups',
 };
