@@ -8,7 +8,9 @@ const S3 = require('aws-sdk/clients/s3');
 const s3Bucket = new S3({ params: { Bucket: 'flaker-images' } });
 
 // TWILIO
+// eslint-disable-next-line no-undef
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
+// eslint-disable-next-line no-undef
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
 
@@ -20,6 +22,7 @@ const uploadPhotoToS3 = (updateFields, sessionToken) => {
     return new Promise((resolve, reject) => {
         const base64ProfilePic = get(updateFields, 'profilePic', null);
         if (base64ProfilePic !== null) {
+            // eslint-disable-next-line no-undef
             const buf = new Buffer(base64ProfilePic.replace(/^data:image\/\w+;base64,/, ''), 'base64');
             const base64Photo = {
                 Key: sessionToken,
@@ -174,6 +177,7 @@ router.get('/verification/:phoneNumber/:code', function(req, res) {
 
         STORE.arrUsers = arrUsers;
         
+        // eslint-disable-next-line no-undef
         return client.verify.services(process.env.TWILIO_SERVICE_ID)
         .verificationChecks
         .create({to: phoneNumber, code: code})
@@ -238,6 +242,7 @@ router.post('/verification/:phoneNumber', function(req, res) {
 
     const { phoneNumber } = req.params;
 
+    // eslint-disable-next-line no-undef
     client.verify.services(process.env.TWILIO_SERVICE_ID)
     .verifications
     .create({to: phoneNumber, channel: 'sms'})
