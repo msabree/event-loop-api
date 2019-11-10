@@ -47,7 +47,12 @@ router.get('/:sessionToken', function(req, res) {
         res.send({
             success: true,
             message: '',
-            events: formattedEvents,
+            events: formattedEvents.filter((event) => {
+                if(STORE.objUser.currentAppVersion !== '1.6' && event.eventType === 'phone'){
+                    return false;
+                }
+                return true;
+            }),
         })
     })
     .catch((err) => {
