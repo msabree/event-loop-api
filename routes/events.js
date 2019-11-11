@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const uuidv4 = require('uuid/v4');
+const findIndex = require('lodash/findIndex');
 
 const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
@@ -36,15 +37,12 @@ router.get('/:sessionToken', function(req, res) {
         // This is a quick/easy fix for the 'joined by me' bug created from
         // moving guest lists into its own table
         const arrEventsUserJoined = STORE.connection.collection(appConstants.GUEST_LIST_TABLE).find({userId: STORE.objUser.userId}).toArray();
-        console.log(arrEventsUserJoined);
-        console.log(arrEvents);
         const arrEventsFormatted = arrEvents.map((event) => {
-            if(arrEventsUserJoined.findIndex((eventsJoined) => eventsJoined.eventId === event.eventId) !== -1){
+            if(findIndex(arrEventsUserJoined, (eventsJoined) => eventsJoined.eventId === event.eventId) !== -1){
                 event.guestList = [STORE.objUser.userId];
             }
             return event;
         });
-        console.log(arrEventsFormatted);
         return Promise.resolve(arrEventsFormatted);
     })
     .then((arrEvents) => {
