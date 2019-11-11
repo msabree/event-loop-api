@@ -43,12 +43,7 @@ router.get('/:sessionToken', function(req, res) {
         // moving guest lists into its own table
         const arrEventsFormatted = STORE.arrEvents.map((event) => {
             if(findIndex(arrEventsUserJoined, (eventsJoined) => eventsJoined.eventId === event.eventId) !== -1){
-                console.log('found index!')
                 event.guestList = [STORE.objUser.userId];
-            }
-            else{
-                console.log(event.eventId);
-                console.log(event.eventId, arrEventsUserJoined.length);
             }
             return event;
         });
