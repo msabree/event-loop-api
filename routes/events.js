@@ -32,6 +32,19 @@ router.get('/:sessionToken', function(req, res) {
         return STORE.connection.collection(appConstants.EVENTS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
     })
     .then((arrEvents) => {
+        STORE.arrEvents = arrEvents;
+        // This is a quick/easy fix for the 'joined by me' bug created from
+        // moving guest lists into its own table
+        const arrEventsUserJoined = STORE.connection.collection(appConstants.GUEST_LIST_TABLE).find({userId: STORE.objUser.userId}).toArray();
+        const arrEventsFormatted = arrEvents.map((event) => {
+            if(event.eventId === arrEventsUserJoined.eventId){
+                event.guestList = [STORE.objUser.userId];
+            }
+            return event;
+        });
+        return Promise.resolve(arrEventsFormatted);
+    })
+    .then((arrEvents) => {
         // Do something with outdated events
         const formattedEvents = arrEvents.map((event) => {
             if(event.userId === STORE.objUser.userId){
