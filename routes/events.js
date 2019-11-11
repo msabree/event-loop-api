@@ -39,7 +39,12 @@ router.get('/:sessionToken', function(req, res) {
         const arrEventsUserJoined = STORE.connection.collection(appConstants.GUEST_LIST_TABLE).find({userId: STORE.objUser.userId}).toArray();
         const arrEventsFormatted = arrEvents.map((event) => {
             if(findIndex(arrEventsUserJoined, (eventsJoined) => eventsJoined.eventId === event.eventId) !== -1){
+                console.log('found index!')
                 event.guestList = [STORE.objUser.userId];
+            }
+            else{
+                console.log(event.eventId);
+                console.log(arrEventsUserJoined.length);
             }
             return event;
         });
