@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const uuidv4 = require('uuid/v4');
+const findIndex = require('lodash/findIndex');
 
 const appConstants = require('../utils/constants');
 const dbConnect = require('../utils/dbConnect');
@@ -30,6 +31,23 @@ router.get('/:sessionToken', function(req, res) {
         arrFriendsUserIds.push(STORE.objUser.userId); // get current user's events as well
 
         return STORE.connection.collection(appConstants.EVENTS_TABLE).find({userId: {$in: arrFriendsUserIds}}).toArray();
+    })
+    .then((arrEvents) => {
+        STORE.arrEvents = arrEvents;
+        // This is a quick/easy fix for the 'joined by me' bug created from
+        // moving guest lists into its own table
+        return STORE.connection.collection(appConstants.GUEST_LIST_TABLE).find({userId: STORE.objUser.userId}).toArray();
+    })
+    .then((arrEventsUserJoined) => {
+        // This is a quick/easy fix for the 'joined by me' bug created from
+        // moving guest lists into its own table
+        const arrEventsFormatted = STORE.arrEvents.map((event) => {
+            if(findIndex(arrEventsUserJoined, (eventsJoined) => eventsJoined.eventId === event.eventId) !== -1){
+                event.guestList = [STORE.objUser.userId];
+            }
+            return event;
+        });
+        return Promise.resolve(arrEventsFormatted);
     })
     .then((arrEvents) => {
         // Do something with outdated events
